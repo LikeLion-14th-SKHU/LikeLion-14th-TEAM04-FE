@@ -234,3 +234,17 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,intellij,windows,visualstudiocode,react
+.claude/
+.github/naming-check.sh
+CLAUDE.md
+exec-plans/
+claude-harness/
+
+### Vite ###
+dist
+dist-ssr
+*.local
+.vite
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
