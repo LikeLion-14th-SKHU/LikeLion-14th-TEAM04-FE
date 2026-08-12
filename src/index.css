@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-canvas: #d9d1c6;
+  --color-paper: #f6f2eb;
+  --color-paper-deep: #ede6dc;
+  --color-ink: #18130f;
+  --color-ink-hover: #38261b;
+  --color-cream: #fffaf3;
+  --color-muted: #756b61;
+  --color-cognac: #9b6747;
+  --color-line: rgba(45, 31, 20, 0.15);
+
+  /* 헤더 서비스명 전용. 그 외 모든 텍스트는 Roboto Mono 고정 */
+  --font-brand: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans:
+    'Roboto Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', ui-monospace, monospace;
+
+  --ease-film: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-ink);
+    background: var(--color-paper);
+    font-family: var(--font-sans);
+  }
+
+  /* 종이 질감 노이즈 오버레이 */
+  body::after {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    content: '';
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

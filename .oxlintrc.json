@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "react-perf", "jsx-a11y"],
+  "env": { "browser": true, "es2024": true },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    // React 17+ 자동 JSX 변환에서는 React 를 import 하지 않는다
+    "react/react-in-jsx-scope": "off",
+    // 배경 필름은 대사가 없는 장식용(aria-hidden)이라 자막 트랙이 없다.
+    // 대사·정보가 있는 영상을 추가하면 이 룰을 다시 켜고 <track> 을 붙일 것
+    "jsx-a11y/media-has-caption": "off"
+  }
+}
