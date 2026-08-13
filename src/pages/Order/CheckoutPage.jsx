@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import Button from '../../components/Button'
 import OrderLayout from './components/OrderLayout'
 import Card from './components/Card'
@@ -23,6 +24,7 @@ const RECEIVER_FIELDS = [
 ]
 
 export default function CheckoutPage() {
+  const navigate = useNavigate()
   // 입력값은 아직 어디로도 나가지 않아 비제어로 둔다 — 브라우저가 그대로 들고 있으면 된다.
   // 버튼 활성 여부를 좌우하는 체크 상태만 React 가 안다
   const [saveAddress, setSaveAddress] = useState(false)
@@ -145,7 +147,7 @@ export default function CheckoutPage() {
               aria-disabled={!agreed}
               aria-describedby="pay-gate"
               onClick={() => {
-                if (agreed) window.location.href = '/order/complete'
+                if (agreed) navigate('/order/complete')
               }}
             >
               결제하기
