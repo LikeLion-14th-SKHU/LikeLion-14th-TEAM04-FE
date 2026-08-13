@@ -45,9 +45,9 @@ export default function Header() {
             {label}
           </a>
         ))}
-        <button
-          className="size-[38px] cursor-pointer rounded-full border-0 bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[28px]"
-          type="button"
+        <a
+          className="block size-[38px] rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[28px]"
+          href="/mypage"
           aria-label="내 계정"
         />
       </nav>

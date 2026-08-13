@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Header from '../../components/Header'
-import Button from './components/Button'
+import Button from '../../components/Button'
 import ColorSwatchOption from './components/ColorSwatchOption'
 
 const COLORS = [
