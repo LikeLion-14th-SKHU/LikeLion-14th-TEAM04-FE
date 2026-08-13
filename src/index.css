@@ -10,6 +10,10 @@
   --color-muted: #756b61;
   --color-cognac: #9b6747;
   --color-line: rgba(45, 31, 20, 0.15);
+  /* 카드·패널 테두리와 강조 라벨은 화면마다 반복돼서 토큰으로 둔다.
+     한두 번만 쓰는 색(섹션 룰·카드 안쪽 선 등)은 임의값 그대로 */
+  --color-frame: #eae1d5;
+  --color-clay: #8c6549;
 
   /* 헤더 서비스명 전용. 그 외 모든 텍스트는 Roboto Mono 고정 */
   --font-brand: 'Cormorant Garamond', 'Times New Roman', serif;

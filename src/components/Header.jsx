@@ -1,9 +1,14 @@
+import currentPath from '../currentPath'
+
 const NAV = [
   ['/', '홈'],
   ['/community', '커뮤니티'],
 ]
 
 export default function Header() {
+  // 이동이 전체 새로고침이라 렌더 중에 값이 바뀌지 않는다 — 상태로 들고 있을 이유가 없다
+  const path = currentPath()
+
   return (
     <header className="flex h-[78px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[70px] max-[860px]:px-[22px]">
       <a
@@ -32,8 +37,10 @@ export default function Header() {
         {NAV.map(([href, label]) => (
           <a
             key={href}
-            className="text-[13px] tracking-[.04em] text-ink no-underline transition-colors duration-700 ease-film hover:text-cognac max-[430px]:text-[12px]"
+            // 현재 페이지만 진하게, 나머지는 잉크 50%
+            className={`text-[13px] tracking-[.04em] no-underline transition-colors duration-700 ease-film hover:text-cognac max-[430px]:text-[12px] ${path === href ? 'text-ink' : 'text-ink/50'}`}
             href={href}
+            aria-current={path === href ? 'page' : undefined}
           >
             {label}
           </a>
