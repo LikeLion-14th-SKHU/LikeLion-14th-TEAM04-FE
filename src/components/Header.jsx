@@ -1,4 +1,4 @@
-import currentPath from '../currentPath'
+import { Link, NavLink } from 'react-router'
 
 const NAV = [
   ['/', '홈'],
@@ -6,15 +6,12 @@ const NAV = [
 ]
 
 export default function Header() {
-  // 이동이 전체 새로고침이라 렌더 중에 값이 바뀌지 않는다 — 상태로 들고 있을 이유가 없다
-  const path = currentPath()
-
   return (
     <header className="flex h-[78px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[70px] max-[860px]:px-[22px]">
-      <a
+      <Link
         // 로고 좌우 간격을 헤더 좌우 여백과 같은 식으로 맞춘다
         className="inline-flex items-center gap-[clamp(24px,3vw,56px)] text-inherit no-underline max-[860px]:gap-[22px]"
-        href="/"
+        to="/"
         aria-label="Memory Atelier 홈"
       >
         {/* 옆의 서비스명이 이름을 읽어주므로 로고는 장식 취급 (alt="") */}
@@ -31,23 +28,29 @@ export default function Header() {
         <span className="font-brand text-[24px] tracking-[.22em] uppercase max-[430px]:text-[13px] max-[430px]:tracking-[.08em]">
           Memory Atelier
         </span>
-      </a>
+      </Link>
 
       <nav className="flex items-center gap-[34px] max-[430px]:gap-[14px]" aria-label="주요 메뉴">
-        {NAV.map(([href, label]) => (
-          <a
-            key={href}
+        {NAV.map(([to, label]) => (
+          // NavLink 가 현재 메뉴 표시(aria-current="page")를 알아서 붙인다.
+          // "/" 만 end 를 준다 — 없으면 /order 같은 모든 경로에서 홈이 켜진다.
+          // "/community" 는 end 를 빼야 끝 슬래시(/community/)에서도 활성으로 잡힌다.
+          // 하위 라우트가 없어서 오활성될 경로도 없다
+          <NavLink
+            key={to}
             // 현재 페이지만 진하게, 나머지는 잉크 50%
-            className={`text-[13px] tracking-[.04em] no-underline transition-colors duration-700 ease-film hover:text-cognac max-[430px]:text-[12px] ${path === href ? 'text-ink' : 'text-ink/50'}`}
-            href={href}
-            aria-current={path === href ? 'page' : undefined}
+            className={({ isActive }) =>
+              `text-[13px] tracking-[.04em] no-underline transition-colors duration-700 ease-film hover:text-cognac max-[430px]:text-[12px] ${isActive ? 'text-ink' : 'text-ink/50'}`
+            }
+            to={to}
+            end={to === '/'}
           >
             {label}
-          </a>
+          </NavLink>
         ))}
-        <a
+        <Link
           className="block size-[38px] rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[28px]"
-          href="/mypage"
+          to="/mypage"
           aria-label="내 계정"
         />
       </nav>

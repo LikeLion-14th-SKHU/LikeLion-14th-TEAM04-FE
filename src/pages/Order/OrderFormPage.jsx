@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import Button from '../../components/Button'
 import OrderLayout from './components/OrderLayout'
 import Card from './components/Card'
@@ -20,6 +21,7 @@ const REVIEW_NOTES = [
 const won = (amount) => `₩ ${amount.toLocaleString('ko-KR')}`
 
 export default function OrderFormPage() {
+  const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const [agreedOrder, setAgreedOrder] = useState(true)
   const [agreedPrivacy, setAgreedPrivacy] = useState(true)
@@ -121,7 +123,7 @@ export default function OrderFormPage() {
                 aria-disabled={!agreed}
                 aria-describedby="order-gate"
                 onClick={() => {
-                  if (agreed) window.location.href = '/order/checkout'
+                  if (agreed) navigate('/order/checkout')
                 }}
               >
                 배송지 입력·결제로 진행

@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import SocialAuth from './SocialAuth'
 
 const COPY = {
@@ -142,12 +143,14 @@ export default function AuthForm({ mode, onModeChange }) {
                 <input className="accent-ink" type="checkbox" name="remember" />
                 로그인 유지
               </label>
-              <a
+              {/* 비밀번호 찾기 화면이 아직 없어 폴백(로그인 화면)으로 떨어진다.
+                  TODO: 비밀번호 찾기 라우트 연결 */}
+              <Link
                 className="text-inherit underline decoration-[rgba(117,107,97,.42)] underline-offset-4"
-                href="/forgot-password"
+                to="/forgot-password"
               >
                 비밀번호를 잊으셨나요?
-              </a>
+              </Link>
             </>
           )}
         </div>
