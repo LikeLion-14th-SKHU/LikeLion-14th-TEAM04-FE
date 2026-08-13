@@ -20,7 +20,7 @@ export default function EditionCard({ title, subtitle, likes, image }) {
           <button
             className="cursor-pointer border-0 bg-transparent p-0 text-left text-[12px] text-[#5b4130] transition-colors duration-700 ease-film hover:text-ink"
             type="button"
-            aria-label={`${title} 추억 상품 미리보기`}
+            aria-label={`${title} 에디션 미리보기`}
           >
             에디션 미리보기 →
           </button>
