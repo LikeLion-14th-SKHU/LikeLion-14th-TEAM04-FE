@@ -1,16 +1,30 @@
 import Header from '../../components/Header'
 import Button from '../../components/Button'
+
 import AccessorySection from './components/AccessorySection'
 import BagSection from './components/BagSection'
 import ClothingSection from './components/ClothingSection'
 
-const LATEST_EDITION = {
-    number: '016',
-    title: '여름의 기록',
-    date: '2026.08.14',
-}
+import { editions } from '../../data/editions'
 
 export default function CollectionPage() {
+    const accessoryEditions = editions.filter(
+        (edition) => edition.mainCategory === 'accessory',
+    )
+
+    const bagEditions = editions.filter(
+        (edition) => edition.mainCategory === 'bag',
+    )
+
+    const clothingEditions = editions.filter(
+        (edition) => edition.mainCategory === 'clothing',
+    )
+
+    const latestEdition = [...editions].sort(
+        (a, b) =>
+            new Date(b.createdAt) - new Date(a.createdAt),
+    )[0]
+
     return (
         <>
             <Header />
@@ -44,11 +58,15 @@ export default function CollectionPage() {
 
                     <section className="mt-[24px] border border-[rgba(24,19,15,.12)] bg-[#f6f0e6] p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]">
                         <div className="grid grid-cols-[200px_minmax(0,1fr)_165px] items-stretch gap-[14px] max-[1050px]:grid-cols-[180px_minmax(0,1fr)] max-[760px]:grid-cols-1">
-                            <AccessorySection />
+                            <AccessorySection
+                                items={accessoryEditions}
+                            />
 
                             <div className="flex min-w-0 flex-col">
-                                <BagSection />
-                                <ClothingSection />
+                                <BagSection items={bagEditions} />
+                                <ClothingSection
+                                    items={clothingEditions}
+                                />
                             </div>
 
                             <aside className="border border-frame bg-[#f8f1e5] p-[14px] max-[1050px]:col-span-2 max-[760px]:col-span-1">
@@ -70,7 +88,7 @@ export default function CollectionPage() {
                                     </p>
 
                                     <p className="mt-[5px] mb-0 font-brand text-[25px]">
-                                        16
+                                        {editions.length}
                                     </p>
 
                                     <p className="mt-[13px] mb-0 text-[7px] tracking-[.16em] text-ink/45">
@@ -88,22 +106,34 @@ export default function CollectionPage() {
                                     </p>
 
                                     <div className="mt-[10px] flex h-[90px] items-center justify-center bg-[#cdbb9f]">
-                                        <span className="text-[7px] text-ink/35">
-                                            IMAGE
-                                        </span>
+                                        {latestEdition?.images?.transparent ? (
+                                            <img
+                                                src={latestEdition.images.transparent}
+                                                alt=""
+                                                className="h-[90%] w-[90%] object-contain"
+                                            />
+                                        ) : (
+                                            <span className="text-[7px] text-ink/35">
+                                                IMAGE
+                                            </span>
+                                        )}
                                     </div>
 
-                                    <p className="mt-[9px] mb-0 text-[11px] font-medium">
-                                        No. {LATEST_EDITION.number}
-                                    </p>
+                                    {latestEdition && (
+                                        <>
+                                            <p className="mt-[9px] mb-0 text-[11px] font-medium">
+                                                No. {latestEdition.number}
+                                            </p>
 
-                                    <p className="mt-[3px] mb-0 truncate text-[8px] text-ink/45">
-                                        {LATEST_EDITION.title}
-                                    </p>
+                                            <p className="mt-[3px] mb-0 truncate text-[8px] text-ink/45">
+                                                {latestEdition.name}
+                                            </p>
 
-                                    <p className="mt-[3px] mb-0 text-[7px] text-ink/35">
-                                        {LATEST_EDITION.date}
-                                    </p>
+                                            <p className="mt-[3px] mb-0 text-[7px] text-ink/35">
+                                                {latestEdition.createdAt}
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
 
                                 <button
@@ -119,7 +149,10 @@ export default function CollectionPage() {
                     </section>
 
                     <div className="mt-[18px] flex items-center justify-between gap-[20px] text-[8px] tracking-[.16em] text-ink/45">
-                        <span>추억을 연결한 나만의 에디션 컬렉션</span>
+                        <span>
+                            추억을 연결한 나만의 에디션 컬렉션
+                        </span>
+
                         <span>MEMORY ATELIER</span>
                     </div>
                 </div>
