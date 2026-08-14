@@ -10,6 +10,10 @@ import OrderFormPage from './pages/Order/OrderFormPage'
 import CheckoutPage from './pages/Order/CheckoutPage'
 import OrderCompletePage from './pages/Order/OrderCompletePage'
 import CollectionPage from './pages/Collection/CollectionPage'
+import EditionCreatePage from './pages/EditionCreate/EditionCreatePage'
+import EditionGeneratingPage from './pages/EditionCreate/EditionGeneratingPage'
+import EditionConceptPage from './pages/EditionCreate/EditionConceptPage'
+import EditionCompletePage from './pages/EditionCreate/EditionCompletePage'
 
 // 경로가 9개로 늘고 주문 흐름이 여러 단계를 오가게 되면서 라우터를 쓴다 —
 // pathname 스위치는 이동할 때마다 전체 새로고침이라 화면이 매번 깜빡였다.
@@ -26,9 +30,18 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<CollectionPage />} />
-      <Route path="/community" element={<CommunityPage />} />
+
       <Route path="/collection/theme" element={<CollectionThemePage />} />
+
+      <Route path="/edition/create" element={<EditionCreatePage />} />
+      <Route path="/edition/create/generating" element={<EditionGeneratingPage />} />
+      <Route path="/edition/create/concepts" element={<EditionConceptPage />} />
+      <Route path="/edition/create/complete" element={<EditionCompletePage />} />
+
+      <Route path="/community" element={<CommunityPage />} />
+
       <Route path="/mypage" element={<MyPage />} />
+
       <Route path="/order" element={<OrderPage />} />
       <Route path="/order/quote" element={<QuotePage />} />
       <Route path="/order/form" element={<OrderFormPage />} />
