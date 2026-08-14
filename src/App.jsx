@@ -9,6 +9,7 @@ import QuotePage from './pages/Order/QuotePage'
 import OrderFormPage from './pages/Order/OrderFormPage'
 import CheckoutPage from './pages/Order/CheckoutPage'
 import OrderCompletePage from './pages/Order/OrderCompletePage'
+import CollectionPage from './pages/Collection/CollectionPage'
 
 // 경로가 9개로 늘고 주문 흐름이 여러 단계를 오가게 되면서 라우터를 쓴다 —
 // pathname 스위치는 이동할 때마다 전체 새로고침이라 화면이 매번 깜빡였다.
@@ -24,6 +25,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<CollectionPage />} />
       <Route path="/community" element={<CommunityPage />} />
       <Route path="/collection/theme" element={<CollectionThemePage />} />
       <Route path="/mypage" element={<MyPage />} />
