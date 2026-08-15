@@ -12,7 +12,7 @@ export default function AuthPage() {
       <Header />
       <main className="min-h-[100dvh] w-full">
         <section
-          className="grid min-h-[calc(100dvh-68px)] grid-cols-[minmax(0,1.5fr)_minmax(390px,.75fr)] max-[860px]:min-h-[auto] max-[860px]:grid-cols-1"
+          className="grid min-h-[calc(100dvh-56px)] grid-cols-[minmax(0,1.5fr)_minmax(390px,.75fr)] max-[860px]:min-h-[auto] max-[860px]:grid-cols-1"
           aria-label="계정 인증"
         >
           <FilmPane />

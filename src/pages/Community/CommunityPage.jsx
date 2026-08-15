@@ -3,63 +3,37 @@ import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
 import EditionCard from './components/EditionCard'
 
-// 목록 API 가 아직 없어 더미로 둔다. TODO: 에디션 목록 API 연동
+import { editions } from '../../data/editions'
+
+// 카드에서 상세로 넘어가야 해서 실제 에디션 데이터로 만든다 — 더미 목록은
+// 상세에 없는 에디션이라 눌러도 "찾을 수 없습니다" 로 떨어졌다.
+// TODO: 공개 에디션 목록 API 연동 (지금은 앞의 3개씩)
+const toCard = (edition) => ({
+  id: edition.id,
+  title: edition.name,
+  subtitle: `${edition.material} · ${edition.subCategory}`,
+  likes: edition.likes,
+  image: edition.images.transparent,
+})
+
 const SECTIONS = [
   {
     id: 'popular',
     eyebrow: 'POPULAR',
     title: '인기 에디션',
-    items: [
-      {
-        id: 'heritage-memory',
-        title: 'Heritage Memory',
-        subtitle: '가죽 · 지갑',
-        likes: 45,
-        image: '/assets/editions/heritage-memory.png',
-      },
-      {
-        id: 'archive-moment',
-        title: 'Archive Moment',
-        subtitle: '면 · 가방',
-        likes: 38,
-        image: '/assets/editions/archive-moment.png',
-      },
-      {
-        id: 'city-monogram',
-        title: 'City Monogram',
-        subtitle: '선택없음 · 데님 미니백',
-        likes: 31,
-        image: '/assets/editions/city-monogram.png',
-      },
-    ],
+    items: [...editions]
+      .sort((a, b) => b.likes - a.likes)
+      .slice(0, 3)
+      .map(toCard),
   },
   {
     id: 'latest',
     eyebrow: 'LATEST',
     title: '최신 에디션',
-    items: [
-      {
-        id: 'summer-letter',
-        title: 'Summer Letter',
-        subtitle: '니트 · 키링',
-        likes: 12,
-        image: '/assets/editions/summer-letter.png',
-      },
-      {
-        id: 'first-office',
-        title: 'First Office',
-        subtitle: '가죽 · 지갑',
-        likes: 9,
-        image: '/assets/editions/first-office.png',
-      },
-      {
-        id: 'evening-note',
-        title: 'Evening Note',
-        subtitle: '면 · 미니백',
-        likes: 6,
-        image: '/assets/editions/evening-note.png',
-      },
-    ],
+    items: [...editions]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3)
+      .map(toCard),
   },
 ]
 

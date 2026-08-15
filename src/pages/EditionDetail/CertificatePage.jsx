@@ -22,7 +22,7 @@ export default function CertificatePage() {
             <>
                 <Header />
 
-                <main className="flex min-h-[calc(100dvh-68px)] items-center justify-center px-[24px]">
+                <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
                     {/* 글자 크기로만 잡으면 우드 한복판에 뜬 토스트처럼 보인다 */}
                     <Panel className="w-full max-w-[520px] py-[56px] text-center">
                         <p className="text-[13px] text-ink/50">
@@ -151,7 +151,7 @@ export default function CertificatePage() {
         <>
             <Header />
 
-            <main className="min-h-[calc(100dvh-68px)] px-[24px] pt-[36px] pb-[48px]">
+            <main className="min-h-[calc(100dvh-56px)] px-[24px] pt-[36px] pb-[48px]">
                 <p className="m-0 text-center text-[8px] tracking-[.24em] text-ink/40">
                     DIGITAL CERTIFICATE
                 </p>

@@ -35,7 +35,7 @@ export default function EditionDetailPage() {
             <>
                 <Header />
 
-                <main className="flex min-h-[calc(100dvh-68px)] items-center justify-center px-[24px]">
+                <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
                     {/* 글자 크기로만 잡으면 우드 한복판에 뜬 토스트처럼 보인다 */}
                     <Panel className="w-full max-w-[520px] py-[56px] text-center">
                         <p className="text-[13px] text-ink/50">
@@ -75,7 +75,7 @@ export default function EditionDetailPage() {
         <>
             <Header />
 
-            <main className="min-h-[calc(100dvh-68px)] w-full">
+            <main className="min-h-[calc(100dvh-56px)] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[58px] pb-[48px] max-[860px]:px-[22px] max-[860px]:pt-[36px]">
                     <Panel>
                         <div className="flex items-end gap-[28px] border-b border-[#ded4c7] pb-[14px]">
@@ -295,19 +295,6 @@ export default function EditionDetailPage() {
                                         <p className="mt-[12px] mb-0 text-[11.5px] leading-[1.9] text-ink/60">
                                             {edition.curation.description}
                                         </p>
-
-                                        <div className="mt-[14px] flex flex-wrap gap-[8px]">
-                                            {edition.curation.keywords.map(
-                                                (keyword) => (
-                                                    <span
-                                                        key={keyword}
-                                                        className="border border-[#ddd1c1] bg-white px-[11px] py-[7px] text-[9px] text-ink/60"
-                                                    >
-                                                        {keyword}
-                                                    </span>
-                                                ),
-                                            )}
-                                        </div>
 
                                         <h3 className="mt-[28px] mb-0 text-[12px] font-medium">
                                             어울리는 MCM 제품
