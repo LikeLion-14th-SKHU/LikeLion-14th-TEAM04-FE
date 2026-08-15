@@ -1,0 +1,78 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-canvas: #d9d1c6;
+  --color-paper: #f6f2eb;
+  --color-paper-deep: #ede6dc;
+  --color-ink: #18130f;
+  --color-ink-hover: #38261b;
+  --color-cream: #fffaf3;
+  --color-muted: #756b61;
+  --color-cognac: #9b6747;
+  --color-line: rgba(45, 31, 20, 0.15);
+  /* 카드·패널 테두리와 강조 라벨은 화면마다 반복돼서 토큰으로 둔다.
+     한두 번만 쓰는 색(섹션 룰·카드 안쪽 선 등)은 임의값 그대로 */
+  --color-frame: #eae1d5;
+  --color-clay: #8c6549;
+  /* 시안의 우드 바닥. 페이지 전역 배경이라 카드용 paper 와 별개로 둔다 */
+  --color-wood: #a87f64;
+
+  /* 헤더 서비스명 전용. 그 외 모든 텍스트는 Roboto Mono 고정 */
+  --font-brand: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans:
+    'Roboto Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', ui-monospace, monospace;
+
+  --ease-film: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-ink);
+    background: var(--color-wood);
+    font-family: var(--font-sans);
+  }
+
+  /* 시안(Figma 338:467)의 빛기둥. 좌표·크기는 1280×832 프레임 기준 실측값.
+     페이지 <main> 이 배경을 안 깔아야 이게 비쳐 보인다 */
+  body::before {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    content: '';
+    background: url("data:image/svg+xml,%3Csvg preserveAspectRatio='none' width='1136.99' height='1903' viewBox='0 0 1136.99 1903' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23f)'%3E%3Cpath d='M568.494 200L936.988 1703H200L568.494 200Z' fill='%23E1BE91' fill-opacity='0.8'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='f' x='0' y='0' width='1136.99' height='1903' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeGaussianBlur stdDeviation='100'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E")
+      no-repeat center -829px / 88.8% 1903px;
+  }
+
+  /* 종이 질감 노이즈 오버레이 */
+  body::after {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    content: '';
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
