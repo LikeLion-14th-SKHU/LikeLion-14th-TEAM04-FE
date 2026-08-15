@@ -197,7 +197,7 @@ export default function EditionCreatePage() {
         <>
             <Header />
 
-            <main className="min-h-[calc(100dvh-68px)] w-full">
+            <main className="min-h-[calc(100dvh-56px)] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[38px] pb-[38px] max-[860px]:px-[22px]">
                     <Panel>
                         <div className="flex items-center gap-[12px]">

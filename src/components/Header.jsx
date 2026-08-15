@@ -7,7 +7,7 @@ const NAV = [
 
 export default function Header() {
   return (
-    <header className="flex h-[68px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[62px] max-[860px]:px-[22px]">
+    <header className="flex h-[56px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[50px] max-[860px]:px-[22px]">
       <Link
         // 로고 좌우 간격을 헤더 좌우 여백과 같은 식으로 맞춘다
         className="inline-flex items-center gap-[clamp(24px,3vw,56px)] text-inherit no-underline max-[860px]:gap-[22px]"
@@ -18,7 +18,7 @@ export default function Header() {
         {/* 로고 위쪽 걸이 때문에 M 이 이미지 박스 중앙보다 아래에 있다.
             서비스명과 시각적으로 같은 높이가 되게 4px 올린다 (레이아웃은 그대로) */}
         <img
-          className="h-[38px] w-auto -translate-y-[4px] max-[430px]:h-[26px] max-[430px]:-translate-y-[3px]"
+          className="h-[32px] w-auto -translate-y-[3px] max-[430px]:h-[24px] max-[430px]:-translate-y-[2px]"
           src="/assets/logo.png"
           alt=""
           width="116"
@@ -49,7 +49,7 @@ export default function Header() {
           </NavLink>
         ))}
         <Link
-          className="block size-[38px] rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[28px]"
+          className="block size-[32px] rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[26px]"
           to="/mypage"
           aria-label="내 계정"
         />

@@ -18,7 +18,7 @@ export default function EditionGeneratingPage() {
         <>
             <Header />
 
-            <main className="flex min-h-[calc(100dvh-68px)] w-full items-center justify-center px-[24px]">
+            <main className="flex min-h-[calc(100dvh-56px)] w-full items-center justify-center px-[24px]">
                 <div className="w-full max-w-[430px] text-center">
                     <Panel>
                         <img

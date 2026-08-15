@@ -6,8 +6,11 @@ import BagSection from './components/BagSection'
 import ClothingSection from './components/ClothingSection'
 
 import { editions } from '../../data/editions'
+import { colorOf, loadTheme } from '../../data/collectionTheme'
 
 export default function CollectionPage() {
+    // 테마 화면에서 저장한 값 — 화면을 옮겨 올 때마다 다시 읽는다
+    const theme = loadTheme()
     const accessoryEditions = editions.filter(
         (edition) => edition.mainCategory === 'accessory',
     )
@@ -34,7 +37,7 @@ export default function CollectionPage() {
                     <div className="flex items-end justify-between gap-[24px] max-[860px]:flex-col max-[860px]:items-stretch">
                         <div>
                             <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
-                                나의 컬렉션
+                                {theme.title}
                             </h1>
 
                             <p className="mt-[12px] mb-0 text-[13px] leading-[1.7] text-ink/60">
@@ -56,7 +59,12 @@ export default function CollectionPage() {
                         </div>
                     </div>
 
-                    <section className="mt-[24px] border border-[rgba(24,19,15,.12)] bg-[#f6f0e6] p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]">
+                    {/* 진열장 바탕이 테마 색이다 — 선반·사이드 카드는 저마다 배경이 있어
+                        어떤 색을 골라도 그 위의 글자가 묻히지 않는다 */}
+                    <section
+                        className="mt-[24px] border border-[rgba(24,19,15,.12)] p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]"
+                        style={{ backgroundColor: colorOf(theme.color).hex }}
+                    >
                         <div className="grid grid-cols-[200px_minmax(0,1fr)_165px] items-stretch gap-[14px] max-[1050px]:grid-cols-[180px_minmax(0,1fr)] max-[760px]:grid-cols-1">
                             <AccessorySection
                                 items={accessoryEditions}

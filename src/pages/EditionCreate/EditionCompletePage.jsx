@@ -83,7 +83,7 @@ export default function EditionCompletePage() {
         <>
             <Header />
 
-            <main className="min-h-[calc(100dvh-68px)] w-full">
+            <main className="min-h-[calc(100dvh-56px)] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[42px] pb-[38px] max-[860px]:px-[22px]">
                     <p className="m-0 text-[8px] tracking-[.22em] text-ink/45">
                         EDITION COMPLETE

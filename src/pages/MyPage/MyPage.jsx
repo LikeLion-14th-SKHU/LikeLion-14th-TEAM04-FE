@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
@@ -34,9 +35,29 @@ const ORDERS = [
 ]
 
 export default function MyPage() {
+  const navigate = useNavigate()
   const [credit, setCredit] = useState(12500)
   const [topUpOpen, setTopUpOpen] = useState(false)
   const [notify, setNotify] = useState({ edition: true, like: true, news: false })
+
+  // 로그인 상태를 서버에 두는 게 아직 없어 이 브라우저에 쌓인 것만 지운다.
+  // TODO: 로그아웃 API 연동
+  const handleLogout = () => {
+    localStorage.clear()
+    sessionStorage.clear()
+    navigate('/login')
+  }
+
+  // ponytail: 되돌릴 수 없는 동작이라 확인은 받되 전용 모달은 안 만든다 —
+  // 브라우저 confirm 이 포커스 가둠·키보드 조작을 다 해준다.
+  // 화면 안의 다이얼로그가 필요해지면 그때 만든다. TODO: 회원 탈퇴 API 연동
+  const handleWithdraw = () => {
+    if (!window.confirm('회원 탈퇴 시 모든 에디션과 컬렉션이 삭제되며 되돌릴 수 없습니다. 탈퇴하시겠습니까?'))
+      return
+    localStorage.clear()
+    sessionStorage.clear()
+    navigate('/login')
+  }
 
   return (
     // Header 를 main 밖에 둔다 — main 안의 <header> 는 banner 랜드마크로 안 잡힌다
@@ -65,9 +86,14 @@ export default function MyPage() {
               <div className="ml-[22px] min-w-0 max-[860px]:ml-0">
                 <p className="m-0 flex items-center gap-[9px] text-[18px] font-semibold">
                   김석환
-                  <span className="inline-flex h-[19px] items-center bg-[#f4ede2] px-[9px] text-[8.5px] tracking-[.12em] text-[#6b4e38]">
-                    공개
-                  </span>
+                  {/* 이름 옆이라 제목 글자 크기를 따라가지 않게 크기를 따로 준다 */}
+                  <button
+                    className="cursor-pointer border border-[rgba(23,18,14,.22)] bg-transparent px-[10px] py-[3px] text-[11px] font-normal text-ink/60 transition-colors duration-700 ease-film hover:bg-white hover:text-ink"
+                    type="button"
+                    onClick={handleLogout}
+                  >
+                    로그아웃
+                  </button>
                 </p>
                 <p className="mt-[7px] mb-0 text-[12.5px] break-all text-ink/55">
                   seokhwan@example.com
@@ -112,6 +138,17 @@ export default function MyPage() {
                     </li>
                   ))}
                 </ul>
+
+                <div className="mt-[18px] flex items-center justify-end gap-[12px]">
+                  {/* 탈퇴는 되돌릴 수 없어 다른 버튼과 같은 무게로 두지 않는다 */}
+                  <button
+                    className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[12px] text-ink/45 underline transition-colors duration-700 ease-film hover:text-[#8c3b33]"
+                    type="button"
+                    onClick={handleWithdraw}
+                  >
+                    회원 탈퇴
+                  </button>
+                </div>
               </section>
 
               <section className="border border-frame bg-white p-[22px]" aria-labelledby="notify-heading">
