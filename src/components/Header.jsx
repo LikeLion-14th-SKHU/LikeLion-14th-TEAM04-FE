@@ -7,7 +7,7 @@ const NAV = [
 
 export default function Header() {
   return (
-    <header className="flex h-[78px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[70px] max-[860px]:px-[22px]">
+    <header className="flex h-[68px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[62px] max-[860px]:px-[22px]">
       <Link
         // 로고 좌우 간격을 헤더 좌우 여백과 같은 식으로 맞춘다
         className="inline-flex items-center gap-[clamp(24px,3vw,56px)] text-inherit no-underline max-[860px]:gap-[22px]"
