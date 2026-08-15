@@ -19,7 +19,7 @@ export default function FilmPane() {
   }
 
   return (
-    <div className="relative isolate h-full min-h-[calc(100dvh-78px)] overflow-hidden bg-[#6d4934] bg-[url(/assets/auth-film-poster.png)] bg-cover bg-center bg-no-repeat max-[860px]:min-h-[43dvh]">
+    <div className="relative isolate h-full min-h-[calc(100dvh-68px)] overflow-hidden bg-[#6d4934] bg-[url(/assets/auth-film-poster.png)] bg-cover bg-center bg-no-repeat max-[860px]:min-h-[43dvh]">
       <video
         ref={videoRef}
         className="absolute inset-0 h-full w-full object-cover object-center motion-reduce:hidden"

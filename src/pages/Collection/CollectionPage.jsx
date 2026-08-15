@@ -29,7 +29,7 @@ export default function CollectionPage() {
         <>
             <Header />
 
-            <main className="min-h-[100dvh] w-full bg-[#b88b6c]">
+            <main className="min-h-[100dvh] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[48px] pb-[42px] max-[860px]:px-[22px] max-[860px]:pt-[28px]">
                     <div className="flex items-end justify-between gap-[24px] max-[860px]:flex-col max-[860px]:items-stretch">
                         <div>
