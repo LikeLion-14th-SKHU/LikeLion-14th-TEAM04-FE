@@ -5,6 +5,7 @@ const PAGE_SIZE = 5
 
 export default function ClothingSection({
     items = [],
+    theme,
 }) {
     const [page, setPage] = useState(0)
 
@@ -22,33 +23,53 @@ export default function ClothingSection({
 
     const visibleItems = [
         ...pageItems,
-        ...Array(PAGE_SIZE - pageItems.length).fill(null),
+        ...Array(
+            PAGE_SIZE - pageItems.length,
+        ).fill(null),
     ]
 
     const handlePrev = () => {
-        setPage((prev) => Math.max(prev - 1, 0))
+        setPage((prev) =>
+            Math.max(prev - 1, 0),
+        )
     }
 
     const handleNext = () => {
         setPage((prev) =>
-            Math.min(prev + 1, totalPages - 1),
+            Math.min(
+                prev + 1,
+                totalPages - 1,
+            ),
         )
     }
 
     return (
         <section
-            className="relative mt-[14px] border border-[#ddd0bf] bg-[#f3eadc] p-[12px]"
+            className="relative mt-[14px] border p-[12px]"
+            style={{
+                backgroundColor: theme.section,
+                borderColor: theme.border,
+            }}
             aria-labelledby="clothing-heading"
         >
             <h2
                 id="clothing-heading"
-                className="m-0 mb-[10px] text-[8px] font-normal tracking-[.18em] text-clay"
+                className="m-0 mb-[10px] text-[8px] font-normal tracking-[.18em]"
+                style={{
+                    color: theme.accent,
+                }}
             >
                 CLOTHING
             </h2>
 
             <div className="relative pt-[18px]">
-                <div className="absolute top-[4px] left-0 h-px w-full bg-[#b89b77]" />
+                <div
+                    className="absolute top-[4px] left-0 h-px w-full"
+                    style={{
+                        backgroundColor:
+                            theme.accent,
+                    }}
+                />
 
                 {page > 0 && (
                     <button
@@ -62,39 +83,83 @@ export default function ClothingSection({
                 )}
 
                 <div className="grid grid-cols-5 gap-[10px]">
-                    {visibleItems.map((item, index) =>
-                        item ? (
-                            <Link
-                                key={item.id}
-                                to={item.href ?? `/edition/${item.id}`}
-                                className="group relative flex h-[300px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 no-underline"
-                                aria-label={`${item.name} 보기`}
-                            >
-                                <span className="absolute top-[-14px] left-1/2 h-[11px] w-[2px] -translate-x-1/2 bg-[#b48d65]" />
+                    {visibleItems.map(
+                        (item, index) =>
+                            item ? (
+                                <Link
+                                    key={item.id}
+                                    to={
+                                        item.href ??
+                                        `/edition/${item.id}`
+                                    }
+                                    className="group relative flex h-[300px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 no-underline"
+                                    aria-label={`${item.name} 보기`}
+                                >
+                                    <span
+                                        className="absolute top-[-14px] left-1/2 h-[11px] w-[2px] -translate-x-1/2"
+                                        style={{
+                                            backgroundColor:
+                                                theme.accent,
+                                        }}
+                                    />
 
-                                <span className="absolute top-[-4px] left-1/2 h-[3px] w-[24px] -translate-x-1/2 rounded-full bg-[#b48d65]" />
+                                    <span
+                                        className="absolute top-[-4px] left-1/2 h-[3px] w-[24px] -translate-x-1/2 rounded-full"
+                                        style={{
+                                            backgroundColor:
+                                                theme.accent,
+                                        }}
+                                    />
 
-                                <div className="flex h-full w-full items-center justify-center bg-[#e4d9c7] p-[7px] shadow-[0_4px_8px_rgba(63,46,33,.10)] transition-transform duration-700 ease-film group-hover:-translate-y-[3px]">
-                                    <img
-                                        src={item.images.transparent}
-                                        alt=""
-                                        className="h-[94%] w-[94%] object-contain"
+                                    <div
+                                        className="flex h-full w-full items-center justify-center p-[7px] shadow-[0_4px_8px_rgba(63,46,33,.10)] transition-transform duration-700 ease-film group-hover:-translate-y-[3px]"
+                                        style={{
+                                            backgroundColor:
+                                                theme.slot,
+                                        }}
+                                    >
+                                        <img
+                                            src={
+                                                item
+                                                    .images
+                                                    .transparent
+                                            }
+                                            alt=""
+                                            className="h-[94%] w-[94%] object-contain"
+                                        />
+                                    </div>
+                                </Link>
+                            ) : (
+                                <div
+                                    key={`empty-${index}`}
+                                    className="relative h-[300px]"
+                                    aria-hidden="true"
+                                >
+                                    <span
+                                        className="absolute top-[-14px] left-1/2 h-[11px] w-[2px] -translate-x-1/2"
+                                        style={{
+                                            backgroundColor:
+                                                theme.accent,
+                                        }}
+                                    />
+
+                                    <span
+                                        className="absolute top-[-4px] left-1/2 h-[3px] w-[24px] -translate-x-1/2 rounded-full"
+                                        style={{
+                                            backgroundColor:
+                                                theme.accent,
+                                        }}
+                                    />
+
+                                    <div
+                                        className="h-full w-full"
+                                        style={{
+                                            backgroundColor:
+                                                theme.slot,
+                                        }}
                                     />
                                 </div>
-                            </Link>
-                        ) : (
-                            <div
-                                key={`empty-${index}`}
-                                className="relative h-[300px]"
-                                aria-hidden="true"
-                            >
-                                <span className="absolute top-[-14px] left-1/2 h-[11px] w-[2px] -translate-x-1/2 bg-[#b48d65]" />
-
-                                <span className="absolute top-[-4px] left-1/2 h-[3px] w-[24px] -translate-x-1/2 rounded-full bg-[#b48d65]" />
-
-                                <div className="h-full w-full bg-[#e4d9c7]" />
-                            </div>
-                        ),
+                            ),
                     )}
                 </div>
 
