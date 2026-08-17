@@ -21,8 +21,7 @@ import { getMyCollection } from '../../api/collection'
 
 import { DEMO_PERSON } from '../../data/demoCommunity'
 
-// API에서 내려오는 category를
-// 실제 옷장 위치에 맞는 값으로 변환
+// API category를 옷장 섹션에 맞게 변환
 const bucketOf = (category = '') => {
     if (category.includes('가방')) {
         return 'bag'
@@ -45,8 +44,7 @@ export default function CollectionPage() {
     // shareToken, userId 둘 다 없으면 내 컬렉션
     const isMine = !shareToken && !userId
 
-    // demo 공유 컬렉션과
-    // /users/:userId/collection 은 아직 목업
+    // demo 공유 컬렉션과 /users/:userId/collection은 아직 목업
     const isMock =
         shareToken === DEMO_PERSON.shareToken || !!userId
 
@@ -100,18 +98,17 @@ export default function CollectionPage() {
                                 ?.slice(0, 10)
                                 .replaceAll('-', '.') ?? '',
 
-                        // 컬렉션 옷장에서는 grid 이미지 사용
+                        // 컬렉션에서는 grid 이미지 사용
                         images: {
                             transparent: card.gridImageUrl,
                         },
 
-                        // category에 따라
-                        // 가방 / 악세사리 / 의류 위치 결정
+                        // 가방 / 액세서리 / 의류 분류
                         mainCategory: bucketOf(
                             card.certificate?.category,
                         ),
 
-                        // 내 에디션 상세
+                        // 내 에디션 상세 페이지
                         href: `/edition/${card.conceptId}`,
                     }),
                 )
@@ -161,8 +158,7 @@ export default function CollectionPage() {
         useState('')
 
     useEffect(() => {
-        // shareToken이 없거나 demo 데이터면
-        // 실제 API 조회하지 않음
+        // shareToken이 없거나 demo 데이터면 실제 API 조회하지 않음
         if (!shareToken || isMock) return
 
         let cancelled = false
@@ -210,8 +206,8 @@ export default function CollectionPage() {
     }, [shareToken, isMock])
 
     // =========================
-    // 공유 버튼
-    // 실제 공유 링크 API는 추후 연동
+    // 컬렉션 공유
+    // 실제 링크 공유는 추후 API 연동
     // =========================
 
     const [shareOpen, setShareOpen] =
@@ -267,13 +263,12 @@ export default function CollectionPage() {
             card.certificate?.category,
         ),
 
-        // 다른 사람의 에디션은
-        // 커뮤니티 상세 페이지로 이동
+        // 다른 사람 에디션은 커뮤니티 상세 페이지로 이동
         href: `/community/edition/${card.conceptId}`,
     }))
 
     // =========================
-    // 실제 화면에서 사용할 데이터
+    // 화면에서 사용할 데이터
     // =========================
 
     const items = isMine
@@ -322,19 +317,14 @@ export default function CollectionPage() {
             <main className="min-h-[100dvh] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[48px] pb-[42px] max-[860px]:px-[22px] max-[860px]:pt-[28px]">
 
-                    {/* =========================
-                        로딩
-                    ========================= */}
+                    {/* 로딩 */}
                     {loading && (
                         <p className="m-0 py-[56px] text-center text-[12px] text-muted">
                             컬렉션을 불러오는 중입니다.
                         </p>
                     )}
 
-                    {/* =========================
-                        비로그인
-                        내 컬렉션 접근 시에만 표시
-                    ========================= */}
+                    {/* 비로그인 */}
                     {isMine &&
                         !collectionLoading &&
                         unauthorized && (
@@ -391,7 +381,7 @@ export default function CollectionPage() {
                                     <div className="mt-[24px]">
                                         <Button
                                             onClick={() =>
-                                                navigate('/login')
+                                                navigate('/')
                                             }
                                         >
                                             로그인 / 회원가입 하러가기
@@ -401,9 +391,7 @@ export default function CollectionPage() {
                             </>
                         )}
 
-                    {/* =========================
-                        내 컬렉션 서버 오류
-                    ========================= */}
+                    {/* 내 컬렉션 서버 오류 */}
                     {isMine &&
                         !collectionLoading &&
                         !unauthorized &&
@@ -440,9 +428,7 @@ export default function CollectionPage() {
                             </>
                         )}
 
-                    {/* =========================
-                        공유 컬렉션 서버 오류
-                    ========================= */}
+                    {/* 공유 컬렉션 서버 오류 */}
                     {!isMine &&
                         !isMock &&
                         !sharedLoading &&
@@ -467,9 +453,7 @@ export default function CollectionPage() {
                             </div>
                         )}
 
-                    {/* =========================
-                        정상 컬렉션
-                    ========================= */}
+                    {/* 정상 컬렉션 */}
                     {!loading &&
                         !unauthorized &&
                         !collectionError &&
@@ -490,7 +474,6 @@ export default function CollectionPage() {
                                         </p>
                                     </div>
 
-                                    {/* 내 컬렉션에서만 생성 / 테마 변경 */}
                                     {isMine && (
                                         <div className="flex gap-[10px] max-[540px]:flex-col">
                                             <Button href="/edition/create">
@@ -516,25 +499,20 @@ export default function CollectionPage() {
                                 >
                                     <div className="grid grid-cols-[200px_minmax(0,1fr)_165px] items-stretch gap-[14px] max-[1050px]:grid-cols-[180px_minmax(0,1fr)] max-[760px]:grid-cols-1">
 
-                                        {/* 악세사리 */}
                                         <AccessorySection
                                             items={accessoryEditions}
                                         />
 
                                         <div className="flex min-w-0 flex-col">
-
-                                            {/* 가방 */}
                                             <BagSection
                                                 items={bagEditions}
                                             />
 
-                                            {/* 의류 */}
                                             <ClothingSection
                                                 items={clothingEditions}
                                             />
                                         </div>
 
-                                        {/* 오른쪽 정보 영역 */}
                                         <aside className="border border-frame bg-[#f8f1e5] p-[14px] max-[1050px]:col-span-2 max-[760px]:col-span-1">
 
                                             <div className="flex flex-col items-center border-b border-[#d9c9b7] pb-[14px] text-center">
@@ -551,7 +529,6 @@ export default function CollectionPage() {
                                                 </p>
                                             </div>
 
-                                            {/* 전체 에디션 수 */}
                                             <div className="border-b border-[#d9c9b7] py-[15px]">
                                                 <p className="m-0 text-[7px] tracking-[.16em] text-ink/45">
                                                     TOTAL EDITIONS
@@ -566,7 +543,6 @@ export default function CollectionPage() {
                                                 </p>
                                             </div>
 
-                                            {/* 가장 최근 에디션 */}
                                             <div className="border-b border-[#d9c9b7] py-[15px]">
                                                 <p className="m-0 text-[7px] tracking-[.16em] text-ink/45">
                                                     LATEST EDITION
@@ -639,7 +615,6 @@ export default function CollectionPage() {
                                                 )}
                                             </div>
 
-                                            {/* 공유 기능 - 추후 API 연동 */}
                                             {isMine && (
                                                 <button
                                                     type="button"
@@ -673,7 +648,6 @@ export default function CollectionPage() {
                 </div>
             </main>
 
-            {/* 컬렉션 공유 기능 - 추후 API 연동 */}
             <ConfirmModal
                 open={shareOpen}
                 title="컬렉션 공유"
