@@ -4,8 +4,67 @@ import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 
-const MATERIALS = ['면', '울', '데님', '가죽']
-const CLOTHING_TYPES = ['상의', '하의', '원피스', '아우터']
+const MATERIALS = [
+    '데님',
+    '가죽',
+    '니트',
+    '울',
+    '면',
+    '린넨',
+    '벨벳',
+    '레이스',
+    '선택안함',
+]
+
+const CLOTHING_CATEGORIES = {
+    top: {
+        label: '상의',
+        subCategories: [
+            '선택안함',
+            '티셔츠',
+            '셔츠',
+            '블라우스',
+            '니트',
+            '맨투맨',
+            '후드티',
+        ],
+    },
+
+    bottom: {
+        label: '하의',
+        subCategories: [
+            '선택안함',
+            '청바지',
+            '슬랙스',
+            '반바지',
+            '스커트',
+            '트레이닝팬츠',
+        ],
+    },
+
+    dress: {
+        label: '원피스',
+        subCategories: [
+            '선택안함',
+            '미니원피스',
+            '미디원피스',
+            '롱원피스',
+            '점프수트',
+        ],
+    },
+
+    outer: {
+        label: '아우터',
+        subCategories: [
+            '선택안함',
+            '자켓',
+            '코트',
+            '패딩',
+            '가디건',
+            '바람막이',
+        ],
+    },
+}
 
 const PRODUCT_CATEGORIES = {
     clothing: {
@@ -53,8 +112,9 @@ const EMPTY_FORM = {
     story: '',
     material: '',
     materialCustom: '',
-    clothingType: '',
-    clothingTypeCustom: '',
+    clothingMain: '',
+    clothingSub: '',
+    clothingSubCustom: '',
     mainCategory: '',
     subCategory: '',
 }
@@ -120,19 +180,24 @@ export default function EditionCreatePage() {
         ? PRODUCT_CATEGORIES[form.mainCategory].subCategories
         : []
 
+    const clothingSubCategories = form.clothingMain
+        ? CLOTHING_CATEGORIES[form.clothingMain].subCategories
+        : []
+
     const materialCompleted =
         form.material &&
         (form.material !== '직접입력' || form.materialCustom.trim())
 
-    const clothingTypeCompleted =
-        form.clothingType &&
-        (form.clothingType !== '직접입력' || form.clothingTypeCustom.trim())
+    const clothingCompleted =
+        form.clothingMain &&
+        form.clothingSub &&
+        (form.clothingSub !== '직접입력' || form.clothingSubCustom.trim())
 
     const canContinue =
         form.image &&
         form.story.trim() &&
         materialCompleted &&
-        clothingTypeCompleted &&
+        clothingCompleted &&
         form.mainCategory &&
         form.subCategory &&
         guideChecked
@@ -157,15 +222,19 @@ export default function EditionCreatePage() {
             return '재질 직접 입력을 완료해주세요.'
         }
 
-        if (!form.clothingType) {
-            return '의류 종류 선택을 완료해주세요.'
+        if (!form.clothingMain) {
+            return '의류 메인 종류 선택을 완료해주세요.'
+        }
+
+        if (!form.clothingSub) {
+            return '의류 세부 종류 선택을 완료해주세요.'
         }
 
         if (
-            form.clothingType === '직접입력' &&
-            !form.clothingTypeCustom.trim()
+            form.clothingSub === '직접입력' &&
+            !form.clothingSubCustom.trim()
         ) {
-            return '의류 종류 직접 입력을 완료해주세요.'
+            return '의류 세부 종류 직접 입력을 완료해주세요.'
         }
 
         if (!form.mainCategory) {
@@ -362,46 +431,83 @@ export default function EditionCreatePage() {
 
                                 <section className="border border-frame bg-white p-[18px]">
                                     <h2 className="m-0 text-[12.5px] font-medium">
-                                        의류 종류
+                                        의류 메인 종류
                                     </h2>
 
-                                    <div className="mt-[12px] flex flex-wrap gap-[8px]">
-                                        {CLOTHING_TYPES.map((item) => (
+                                    <div className="mt-[12px] grid grid-cols-4 gap-[8px]">
+                                        {Object.entries(CLOTHING_CATEGORIES).map(
+                                            ([value, category]) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setForm((prev) => ({
+                                                            ...prev,
+                                                            clothingMain: value,
+                                                            clothingSub: '',
+                                                            clothingSubCustom: '',
+                                                        }))
+                                                    }
+                                                    className={`h-[36px] cursor-pointer border text-[10px] transition-colors duration-700 ease-film ${form.clothingMain === value
+                                                        ? 'border-ink bg-ink text-cream'
+                                                        : 'border-[#ddd1c1] bg-white text-ink/65 hover:border-clay'
+                                                        }`}
+                                                >
+                                                    {category.label}
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                </section>
+
+                                <section className="border border-frame bg-white p-[18px]">
+                                    <h2 className="m-0 text-[12.5px] font-medium">
+                                        의류 세부 종류
+                                    </h2>
+
+                                    {form.clothingMain ? (
+                                        <div className="mt-[12px] flex flex-wrap gap-[8px]">
+                                            {clothingSubCategories.map((item) => (
+                                                <button
+                                                    key={item}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateForm('clothingSub', item)
+                                                    }
+                                                    className={`h-[32px] cursor-pointer border px-[13px] text-[10px] transition-colors duration-700 ease-film ${form.clothingSub === item
+                                                        ? 'border-ink bg-ink text-cream'
+                                                        : 'border-[#ddd1c1] bg-white text-ink/65 hover:border-clay'
+                                                        }`}
+                                                >
+                                                    {item}
+                                                </button>
+                                            ))}
+
                                             <button
-                                                key={item}
                                                 type="button"
                                                 onClick={() =>
-                                                    updateForm('clothingType', item)
+                                                    updateForm('clothingSub', '직접입력')
                                                 }
-                                                className={`h-[32px] cursor-pointer border px-[14px] text-[10px] transition-colors duration-700 ease-film ${form.clothingType === item
+                                                className={`h-[32px] cursor-pointer border px-[13px] text-[10px] ${form.clothingSub === '직접입력'
                                                     ? 'border-ink bg-ink text-cream'
-                                                    : 'border-[#ddd1c1] bg-white text-ink/65 hover:border-clay'
+                                                    : 'border-[#ddd1c1] bg-white text-ink/65'
                                                     }`}
                                             >
-                                                {item}
+                                                직접 입력
                                             </button>
-                                        ))}
+                                        </div>
+                                    ) : (
+                                        <p className="mt-[12px] mb-0 text-[10px] text-ink/40">
+                                            먼저 의류 메인 종류를 선택해주세요.
+                                        </p>
+                                    )}
 
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                updateForm('clothingType', '직접입력')
-                                            }
-                                            className={`h-[32px] cursor-pointer border px-[14px] text-[10px] ${form.clothingType === '직접입력'
-                                                ? 'border-ink bg-ink text-cream'
-                                                : 'border-[#ddd1c1] bg-white text-ink/65'
-                                                }`}
-                                        >
-                                            직접 입력
-                                        </button>
-                                    </div>
-
-                                    {form.clothingType === '직접입력' && (
+                                    {form.clothingSub === '직접입력' && (
                                         <input
-                                            value={form.clothingTypeCustom}
+                                            value={form.clothingSubCustom}
                                             onChange={(event) =>
                                                 updateForm(
-                                                    'clothingTypeCustom',
+                                                    'clothingSubCustom',
                                                     event.target.value,
                                                 )
                                             }

@@ -9,6 +9,13 @@ const CATEGORY_LABELS = {
     accessory: '악세사리',
 }
 
+const CLOTHING_MAIN_LABELS = {
+    top: '상의',
+    bottom: '하의',
+    dress: '원피스',
+    outer: '아우터',
+}
+
 export default function EditionCompletePage() {
     const navigate = useNavigate()
 
@@ -36,10 +43,17 @@ export default function EditionCompletePage() {
             ? form.materialCustom
             : form.material
 
-    const clothingType =
-        form.clothingType === '직접입력'
-            ? form.clothingTypeCustom
-            : form.clothingType
+    const clothingSub =
+        form.clothingSub === '직접입력'
+            ? form.clothingSubCustom
+            : form.clothingSub
+
+    const clothingType = [
+        CLOTHING_MAIN_LABELS[form.clothingMain],
+        clothingSub === '선택안함' ? '' : clothingSub,
+    ]
+        .filter(Boolean)
+        .join(' · ')
 
     const handleStartEdit = () => {
         setEditingValue(editionName)
