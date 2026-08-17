@@ -21,7 +21,6 @@ import { getMyCollection } from '../../api/collection'
 
 import { DEMO_PERSON } from '../../data/demoCommunity'
 
-// API category를 옷장 섹션에 맞게 변환
 const bucketOf = (category = '') => {
     if (category.includes('가방')) {
         return 'bag'
@@ -41,22 +40,29 @@ export default function CollectionPage() {
     const navigate = useNavigate()
     const { shareToken, userId } = useParams()
 
-    // shareToken, userId 둘 다 없으면 내 컬렉션
     const isMine = !shareToken && !userId
 
-    // demo 공유 컬렉션과 /users/:userId/collection은 아직 목업
     const isMock =
-        shareToken === DEMO_PERSON.shareToken || !!userId
+        shareToken === DEMO_PERSON.shareToken ||
+        !!userId
 
     // =========================
     // 내 컬렉션
     // =========================
 
-    const [myEditions, setMyEditions] = useState([])
-    const [collectionLoading, setCollectionLoading] =
-        useState(false)
-    const [collectionError, setCollectionError] =
-        useState('')
+    const [myEditions, setMyEditions] =
+        useState([])
+
+    const [
+        collectionLoading,
+        setCollectionLoading,
+    ] = useState(false)
+
+    const [
+        collectionError,
+        setCollectionError,
+    ] = useState('')
+
     const [unauthorized, setUnauthorized] =
         useState(false)
 
@@ -71,47 +77,52 @@ export default function CollectionPage() {
                 setCollectionError('')
                 setUnauthorized(false)
 
-                const data = await getMyCollection({
-                    page: 0,
-                    size: 100,
-                })
+                const data =
+                    await getMyCollection({
+                        page: 0,
+                        size: 100,
+                    })
 
                 if (cancelled) return
 
-                const mapped = (data?.content ?? []).map(
-                    (card) => ({
-                        id: card.conceptId,
+                const mapped = (
+                    data?.content ?? []
+                ).map((card) => ({
+                    id: card.conceptId,
 
-                        number:
-                            card.certificate?.editionNumber ?? '',
+                    number:
+                        card.certificate
+                            ?.editionNumber ?? '',
 
-                        name:
-                            card.certificate?.editionName ?? '',
+                    name:
+                        card.certificate
+                            ?.editionName ?? '',
 
-                        // 최신 에디션 정렬용
-                        issuedAt:
-                            card.certificate?.issuedAt ?? null,
+                    issuedAt:
+                        card.certificate
+                            ?.issuedAt ?? null,
 
-                        // 화면 표시용
-                        createdAt:
-                            card.certificate?.issuedAt
-                                ?.slice(0, 10)
-                                .replaceAll('-', '.') ?? '',
+                    createdAt:
+                        card.certificate?.issuedAt
+                            ?.slice(0, 10)
+                            .replaceAll(
+                                '-',
+                                '.',
+                            ) ?? '',
 
-                        // 컬렉션에서는 grid 이미지 사용
-                        images: {
-                            transparent: card.gridImageUrl,
-                        },
+                    images: {
+                        transparent:
+                            card.gridImageUrl,
+                    },
 
-                        // 가방 / 액세서리 / 의류 분류
-                        mainCategory: bucketOf(
-                            card.certificate?.category,
+                    mainCategory:
+                        bucketOf(
+                            card.certificate
+                                ?.category,
                         ),
 
-                        // 내 에디션 상세 페이지
-                        href: `/edition/${card.conceptId}`,
-                    }),
-                )
+                    href: `/edition/${card.conceptId}`,
+                }))
 
                 setMyEditions(mapped)
             } catch (error) {
@@ -151,52 +162,58 @@ export default function CollectionPage() {
     // 다른 사람 공유 컬렉션
     // =========================
 
-    const [shared, setShared] = useState(null)
-    const [sharedLoading, setSharedLoading] =
-        useState(false)
+    const [shared, setShared] =
+        useState(null)
+
+    const [
+        sharedLoading,
+        setSharedLoading,
+    ] = useState(false)
+
     const [sharedError, setSharedError] =
         useState('')
 
     useEffect(() => {
-        // shareToken이 없거나 demo 데이터면 실제 API 조회하지 않음
         if (!shareToken || isMock) return
 
         let cancelled = false
 
-        const fetchSharedCollection = async () => {
-            try {
-                setSharedLoading(true)
-                setSharedError('')
+        const fetchSharedCollection =
+            async () => {
+                try {
+                    setSharedLoading(true)
+                    setSharedError('')
 
-                const data = await getSharedView(
-                    shareToken,
-                    {
-                        page: 0,
-                        size: 100,
-                    },
-                )
+                    const data =
+                        await getSharedView(
+                            shareToken,
+                            {
+                                page: 0,
+                                size: 100,
+                            },
+                        )
 
-                if (cancelled) return
+                    if (cancelled) return
 
-                setShared(data)
-            } catch (error) {
-                if (cancelled) return
+                    setShared(data)
+                } catch (error) {
+                    if (cancelled) return
 
-                console.error(
-                    '공유 컬렉션 조회 실패:',
-                    error,
-                )
+                    console.error(
+                        '공유 컬렉션 조회 실패:',
+                        error,
+                    )
 
-                setSharedError(
-                    error.message ??
-                    '컬렉션을 불러오지 못했습니다.',
-                )
-            } finally {
-                if (!cancelled) {
-                    setSharedLoading(false)
+                    setSharedError(
+                        error.message ??
+                        '컬렉션을 불러오지 못했습니다.',
+                    )
+                } finally {
+                    if (!cancelled) {
+                        setSharedLoading(false)
+                    }
                 }
             }
-        }
 
         fetchSharedCollection()
 
@@ -206,8 +223,7 @@ export default function CollectionPage() {
     }, [shareToken, isMock])
 
     // =========================
-    // 컬렉션 공유
-    // 실제 링크 공유는 추후 API 연동
+    // 공유 기능
     // =========================
 
     const [shareOpen, setShareOpen] =
@@ -221,18 +237,24 @@ export default function CollectionPage() {
         ? loadTheme()
         : DEFAULT_THEME
 
+    const collectionColor = colorOf(
+        theme.color,
+    )
+
     // =========================
-    // 공유 컬렉션 소유자
+    // 공유 컬렉션 사용자
     // =========================
 
     const owner = {
         nickname:
             shared?.ownerNickname ??
-            (isMock ? DEMO_PERSON.nickname : ''),
+            (isMock
+                ? DEMO_PERSON.nickname
+                : ''),
     }
 
     // =========================
-    // 공유 컬렉션 데이터 변환
+    // 공유 컬렉션 데이터
     // =========================
 
     const sharedEditions = (
@@ -241,7 +263,8 @@ export default function CollectionPage() {
         id: card.conceptId,
 
         number:
-            card.certificate?.editionNumber ?? '',
+            card.certificate?.editionNumber ??
+            '',
 
         name:
             card.certificate?.editionName ?? '',
@@ -256,20 +279,16 @@ export default function CollectionPage() {
 
         images: {
             transparent:
-                card.gridImageUrl || card.imageUrl,
+                card.gridImageUrl ||
+                card.imageUrl,
         },
 
         mainCategory: bucketOf(
             card.certificate?.category,
         ),
 
-        // 다른 사람 에디션은 커뮤니티 상세 페이지로 이동
         href: `/community/edition/${card.conceptId}`,
     }))
-
-    // =========================
-    // 화면에서 사용할 데이터
-    // =========================
 
     const items = isMine
         ? myEditions
@@ -277,13 +296,10 @@ export default function CollectionPage() {
             ? editions
             : sharedEditions
 
-    // =========================
-    // 카테고리별 분류
-    // =========================
-
     const accessoryEditions = items.filter(
         (edition) =>
-            edition.mainCategory === 'accessory',
+            edition.mainCategory ===
+            'accessory',
     )
 
     const bagEditions = items.filter(
@@ -293,12 +309,9 @@ export default function CollectionPage() {
 
     const clothingEditions = items.filter(
         (edition) =>
-            edition.mainCategory === 'clothing',
+            edition.mainCategory ===
+            'clothing',
     )
-
-    // =========================
-    // 가장 최근 에디션
-    // =========================
 
     const latestEdition = [...items].sort(
         (a, b) =>
@@ -308,7 +321,9 @@ export default function CollectionPage() {
 
     const loading =
         (isMine && collectionLoading) ||
-        (!isMine && !isMock && sharedLoading)
+        (!isMine &&
+            !isMock &&
+            sharedLoading)
 
     return (
         <>
@@ -317,10 +332,10 @@ export default function CollectionPage() {
             <main className="min-h-[100dvh] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[48px] pb-[42px] max-[860px]:px-[22px] max-[860px]:pt-[28px]">
 
-                    {/* 로딩 */}
                     {loading && (
                         <p className="m-0 py-[56px] text-center text-[12px] text-muted">
-                            컬렉션을 불러오는 중입니다.
+                            컬렉션을 불러오는
+                            중입니다.
                         </p>
                     )}
 
@@ -335,7 +350,10 @@ export default function CollectionPage() {
                                     </h1>
 
                                     <p className="mt-[12px] mb-0 text-[13px] leading-[1.7] text-ink/60">
-                                        추억을 담은 에디션을 나만의 컬렉션에서 확인하세요.
+                                        추억을 담은
+                                        에디션을 나만의
+                                        컬렉션에서
+                                        확인하세요.
                                     </p>
                                 </div>
 
@@ -369,11 +387,13 @@ export default function CollectionPage() {
                                         className="mt-[18px] mb-0 text-[18px] font-semibold"
                                         id="login-required-heading"
                                     >
-                                        로그인이 필요한 페이지입니다.
+                                        로그인이 필요한
+                                        페이지입니다.
                                     </h2>
 
                                     <p className="mt-[10px] mb-0 text-[12.5px] leading-[20px] break-keep text-ink/55">
-                                        로그인하거나 회원가입 후
+                                        로그인하거나 회원가입
+                                        후
                                         <br />
                                         컬렉션을 이용해보세요.
                                     </p>
@@ -381,54 +401,47 @@ export default function CollectionPage() {
                                     <div className="mt-[24px]">
                                         <Button
                                             onClick={() =>
-                                                navigate('/')
+                                                navigate(
+                                                    '/',
+                                                )
                                             }
                                         >
-                                            로그인 / 회원가입 하러가기
+                                            로그인 / 회원가입
+                                            하러가기
                                         </Button>
                                     </div>
                                 </section>
                             </>
                         )}
 
-                    {/* 내 컬렉션 서버 오류 */}
+                    {/* 내 컬렉션 오류 */}
                     {isMine &&
                         !collectionLoading &&
                         !unauthorized &&
                         collectionError && (
-                            <>
-                                <div className="mb-[24px]">
-                                    <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
-                                        {theme.title}
-                                    </h1>
+                            <div
+                                className="flex min-h-[220px] flex-col items-center justify-center border border-frame bg-white px-[24px] text-center"
+                                role="alert"
+                            >
+                                <p className="m-0 text-[13px] text-cognac">
+                                    {
+                                        collectionError
+                                    }
+                                </p>
 
-                                    <p className="mt-[12px] mb-0 text-[13px] leading-[1.7] text-ink/60">
-                                        추억을 담은 에디션을 나만의 컬렉션에서 확인하세요.
-                                    </p>
-                                </div>
-
-                                <div
-                                    className="flex min-h-[220px] flex-col items-center justify-center border border-frame bg-white px-[24px] text-center"
-                                    role="alert"
+                                <button
+                                    className="mt-[14px] cursor-pointer border-0 bg-transparent p-0 text-[12px] text-[#5b4130] underline"
+                                    type="button"
+                                    onClick={() =>
+                                        window.location.reload()
+                                    }
                                 >
-                                    <p className="m-0 text-[13px] text-cognac">
-                                        {collectionError}
-                                    </p>
-
-                                    <button
-                                        className="mt-[14px] cursor-pointer border-0 bg-transparent p-0 text-[12px] text-[#5b4130] underline"
-                                        type="button"
-                                        onClick={() =>
-                                            window.location.reload()
-                                        }
-                                    >
-                                        다시 시도
-                                    </button>
-                                </div>
-                            </>
+                                    다시 시도
+                                </button>
+                            </div>
                         )}
 
-                    {/* 공유 컬렉션 서버 오류 */}
+                    {/* 공유 컬렉션 오류 */}
                     {!isMine &&
                         !isMock &&
                         !sharedLoading &&
@@ -477,7 +490,8 @@ export default function CollectionPage() {
                                     {isMine && (
                                         <div className="flex gap-[10px] max-[540px]:flex-col">
                                             <Button href="/edition/create">
-                                                + 새 에디션 만들기
+                                                + 새 에디션
+                                                만들기
                                             </Button>
 
                                             <Button
@@ -491,31 +505,61 @@ export default function CollectionPage() {
                                 </div>
 
                                 <section
-                                    className="mt-[24px] border border-[rgba(24,19,15,.12)] p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]"
+                                    className="mt-[24px] border p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]"
                                     style={{
                                         backgroundColor:
-                                            colorOf(theme.color).hex,
+                                            collectionColor.cabinet,
+                                        borderColor:
+                                            collectionColor.border,
                                     }}
                                 >
                                     <div className="grid grid-cols-[200px_minmax(0,1fr)_165px] items-stretch gap-[14px] max-[1050px]:grid-cols-[180px_minmax(0,1fr)] max-[760px]:grid-cols-1">
 
                                         <AccessorySection
-                                            items={accessoryEditions}
+                                            items={
+                                                accessoryEditions
+                                            }
+                                            theme={
+                                                collectionColor
+                                            }
                                         />
 
                                         <div className="flex min-w-0 flex-col">
                                             <BagSection
-                                                items={bagEditions}
+                                                items={
+                                                    bagEditions
+                                                }
+                                                theme={
+                                                    collectionColor
+                                                }
                                             />
 
                                             <ClothingSection
-                                                items={clothingEditions}
+                                                items={
+                                                    clothingEditions
+                                                }
+                                                theme={
+                                                    collectionColor
+                                                }
                                             />
                                         </div>
 
-                                        <aside className="border border-frame bg-[#f8f1e5] p-[14px] max-[1050px]:col-span-2 max-[760px]:col-span-1">
-
-                                            <div className="flex flex-col items-center border-b border-[#d9c9b7] pb-[14px] text-center">
+                                        <aside
+                                            className="border p-[14px] max-[1050px]:col-span-2 max-[760px]:col-span-1"
+                                            style={{
+                                                backgroundColor:
+                                                    collectionColor.side,
+                                                borderColor:
+                                                    collectionColor.border,
+                                            }}
+                                        >
+                                            <div
+                                                className="flex flex-col items-center border-b pb-[14px] text-center"
+                                                style={{
+                                                    borderColor:
+                                                        collectionColor.border,
+                                                }}
+                                            >
                                                 <img
                                                     src="/assets/logo.png"
                                                     alt=""
@@ -529,23 +573,38 @@ export default function CollectionPage() {
                                                 </p>
                                             </div>
 
-                                            <div className="border-b border-[#d9c9b7] py-[15px]">
+                                            <div
+                                                className="border-b py-[15px]"
+                                                style={{
+                                                    borderColor:
+                                                        collectionColor.border,
+                                                }}
+                                            >
                                                 <p className="m-0 text-[7px] tracking-[.16em] text-ink/45">
-                                                    TOTAL EDITIONS
+                                                    TOTAL
+                                                    EDITIONS
                                                 </p>
 
                                                 <p className="mt-[5px] mb-0 font-brand text-[25px]">
                                                     {isMine
                                                         ? myEditions.length
-                                                        : shared?.cards
+                                                        : shared
+                                                            ?.cards
                                                             ?.totalElements ??
                                                         items.length}
                                                 </p>
                                             </div>
 
-                                            <div className="border-b border-[#d9c9b7] py-[15px]">
+                                            <div
+                                                className="border-b py-[15px]"
+                                                style={{
+                                                    borderColor:
+                                                        collectionColor.border,
+                                                }}
+                                            >
                                                 <p className="m-0 text-[7px] tracking-[.16em] text-ink/45">
-                                                    LATEST EDITION
+                                                    LATEST
+                                                    EDITION
                                                 </p>
 
                                                 {latestEdition ? (
@@ -557,9 +616,14 @@ export default function CollectionPage() {
                                                             )
                                                         }
                                                         className="group mt-[10px] block w-full cursor-pointer border-0 bg-transparent p-0 text-left"
-                                                        aria-label={`${latestEdition.name} 상세 보기`}
                                                     >
-                                                        <div className="flex h-[90px] items-center justify-center bg-[#cdbb9f] transition-colors duration-700 ease-film group-hover:bg-white">
+                                                        <div
+                                                            className="flex h-[90px] items-center justify-center transition-opacity duration-700 ease-film group-hover:opacity-80"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    collectionColor.slot,
+                                                            }}
+                                                        >
                                                             {latestEdition
                                                                 .images
                                                                 ?.transparent ? (
@@ -581,7 +645,7 @@ export default function CollectionPage() {
                                                             )}
                                                         </div>
 
-                                                        <p className="mt-[9px] mb-0 text-[11px] font-medium text-ink">
+                                                        <p className="mt-[9px] mb-0 text-[11px] font-medium">
                                                             No.{' '}
                                                             {
                                                                 latestEdition.number
@@ -602,14 +666,22 @@ export default function CollectionPage() {
                                                     </button>
                                                 ) : (
                                                     <div className="mt-[10px]">
-                                                        <div className="flex h-[90px] items-center justify-center bg-[#cdbb9f]">
+                                                        <div
+                                                            className="flex h-[90px] items-center justify-center"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    collectionColor.slot,
+                                                            }}
+                                                        >
                                                             <span className="text-[7px] text-ink/35">
                                                                 IMAGE
                                                             </span>
                                                         </div>
 
-                                                        <p className="mt-[9px] mb-0 text-[8px] leading-[1.5] text-ink/35">
-                                                            아직 생성된 에디션이 없습니다.
+                                                        <p className="mt-[9px] mb-0 text-[8px] text-ink/35">
+                                                            아직 생성된
+                                                            에디션이
+                                                            없습니다.
                                                         </p>
                                                     </div>
                                                 )}
@@ -618,9 +690,17 @@ export default function CollectionPage() {
                                             {isMine && (
                                                 <button
                                                     type="button"
-                                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white hover:text-ink"
+                                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border bg-transparent px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-opacity duration-700 ease-film hover:opacity-70"
+                                                    style={{
+                                                        backgroundColor:
+                                                            collectionColor.drawer,
+                                                        borderColor:
+                                                            collectionColor.border,
+                                                    }}
                                                     onClick={() =>
-                                                        setShareOpen(true)
+                                                        setShareOpen(
+                                                            true,
+                                                        )
                                                     }
                                                 >
                                                     SHARE YOUR
@@ -654,8 +734,12 @@ export default function CollectionPage() {
                 description="컬렉션 링크 공유 기능은 추후 연동 예정입니다."
                 confirmText="확인"
                 cancelText={null}
-                onConfirm={() => setShareOpen(false)}
-                onClose={() => setShareOpen(false)}
+                onConfirm={() =>
+                    setShareOpen(false)
+                }
+                onClose={() =>
+                    setShareOpen(false)
+                }
             />
         </>
     )
