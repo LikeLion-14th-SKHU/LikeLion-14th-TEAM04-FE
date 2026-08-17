@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
 import Header from '../../components/Header'
@@ -7,10 +7,15 @@ import Button from '../../components/Button'
 import CurationCard from './components/CurationCard'
 
 import { editions } from '../../data/editions'
+import {
+    getMyPublicSettings,
+    updateCardVisibility,
+} from '../../api/publicSettings'
 
 export default function EditionDetailPage() {
     const { editionId, userId } = useParams()
 
+    // userId가 없으면 내 에디션
     const isMine = !userId
 
     // TODO: 추후 사용자 조회 API로 교체
@@ -41,6 +46,42 @@ export default function EditionDetailPage() {
     const [pendingPublicState, setPendingPublicState] =
         useState(null)
 
+    const [visibilityLoading, setVisibilityLoading] =
+        useState(true)
+
+    const [visibilityPending, setVisibilityPending] =
+        useState(false)
+
+    const [visibilityError, setVisibilityError] =
+        useState('')
+
+    // 내 에디션일 때만 공개 설정 조회
+    useEffect(() => {
+        if (!edition || !isMine) {
+            setVisibilityLoading(false)
+            return
+        }
+
+        getMyPublicSettings()
+            .then((settings) => {
+                const card = settings.cards.find(
+                    (item) =>
+                        item.conceptId === edition.concept.id,
+                )
+
+                setIsPublic(
+                    card?.isPublic ??
+                    settings.collection.isPublic,
+                )
+            })
+            .catch((error) =>
+                setVisibilityError(error.message),
+            )
+            .finally(() =>
+                setVisibilityLoading(false),
+            )
+    }, [edition, isMine])
+
     if (!edition) {
         return (
             <>
@@ -69,12 +110,24 @@ export default function EditionDetailPage() {
         setPendingPublicState(!isPublic)
     }
 
-    const handleConfirmVisibility = () => {
-        setIsPublic(pendingPublicState)
+    const handleConfirmVisibility = async () => {
+        setVisibilityPending(true)
+        setVisibilityError('')
 
-        // TODO: 공개/비공개 변경 API 연결
+        try {
+            const setting =
+                await updateCardVisibility(
+                    edition.concept.id,
+                    pendingPublicState,
+                )
 
-        setPendingPublicState(null)
+            setIsPublic(setting.isPublic)
+            setPendingPublicState(null)
+        } catch (error) {
+            setVisibilityError(error.message)
+        } finally {
+            setVisibilityPending(false)
+        }
     }
 
     const handleCancelVisibility = () => {
@@ -100,7 +153,7 @@ export default function EditionDetailPage() {
 
             alert('에디션 링크가 복사되었습니다.')
         } catch {
-            // 공유 취소
+            // 사용자가 공유 창을 닫은 경우
         }
     }
 
@@ -125,6 +178,7 @@ export default function EditionDetailPage() {
                         </div>
                     </div>
 
+                    {/* 좋아요 */}
                     <button
                         type="button"
                         onClick={handleLike}
@@ -137,42 +191,57 @@ export default function EditionDetailPage() {
                         좋아요 {likes}개
                     </button>
 
-                    {/* 내 에디션 / 다른 사람 프로필 */}
+                    {/* 내 에디션 */}
                     {isMine ? (
-                        <div className="mt-[20px] flex items-center justify-between border border-frame bg-white px-[18px] py-[18px]">
-                            <div>
-                                <p className="m-0 text-[11px] font-medium">
-                                    에디션 공개
-                                </p>
+                        <>
+                            <div className="mt-[20px] flex items-center justify-between border border-frame bg-white px-[18px] py-[18px]">
+                                <div>
+                                    <p className="m-0 text-[11px] font-medium">
+                                        에디션 공개
+                                    </p>
 
-                                <p className="mt-[6px] mb-0 text-[9px] text-ink/45">
-                                    이 에디션을 커뮤니티에 공개합니다.
-                                </p>
-                            </div>
+                                    <p className="mt-[6px] mb-0 text-[9px] text-ink/45">
+                                        이 에디션을 커뮤니티에 공개합니다.
+                                    </p>
+                                </div>
 
-                            <div className="flex items-center gap-[10px]">
-                                <span className="text-[8px] text-ink/40">
-                                    {isPublic ? 'ON' : 'OFF'}
-                                </span>
+                                <div className="flex items-center gap-[10px]">
+                                    <span className="text-[8px] text-ink/40">
+                                        {isPublic ? 'ON' : 'OFF'}
+                                    </span>
 
-                                <button
-                                    type="button"
-                                    onClick={handleToggleRequest}
-                                    className={`relative h-[23px] w-[44px] cursor-pointer rounded-full border-0 transition-colors duration-500 ${isPublic
-                                            ? 'bg-ink'
-                                            : 'bg-[#d6cec4]'
-                                        }`}
-                                >
-                                    <span
-                                        className={`absolute top-[3px] size-[17px] rounded-full bg-white transition-all duration-500 ${isPublic
-                                                ? 'left-[24px]'
-                                                : 'left-[3px]'
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleRequest}
+                                        disabled={visibilityLoading}
+                                        aria-label="에디션 공개 설정"
+                                        aria-pressed={isPublic}
+                                        className={`relative h-[23px] w-[44px] cursor-pointer rounded-full border-0 transition-colors duration-500 disabled:cursor-default disabled:opacity-50 ${isPublic
+                                                ? 'bg-ink'
+                                                : 'bg-[#d6cec4]'
                                             }`}
-                                    />
-                                </button>
+                                    >
+                                        <span
+                                            className={`absolute top-[3px] size-[17px] rounded-full bg-white transition-all duration-500 ${isPublic
+                                                    ? 'left-[24px]'
+                                                    : 'left-[3px]'
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+
+                            {visibilityError && (
+                                <p
+                                    className="mt-[8px] mb-0 text-[10px] text-[#8c3b33]"
+                                    role="alert"
+                                >
+                                    {visibilityError}
+                                </p>
+                            )}
+                        </>
                     ) : (
+                        /* 다른 사람 에디션: 공개 설정 자리에 프로필 */
                         <div className="mt-[20px] flex items-center justify-between border border-frame bg-white px-[16px] py-[13px]">
                             <div className="flex min-w-0 items-center gap-[11px]">
                                 {owner.profileImage ? (
@@ -216,7 +285,7 @@ export default function EditionDetailPage() {
                             {edition.name}
                         </h2>
 
-                        {/* 보증서는 소유자만 */}
+                        {/* 보증서는 내 에디션에서만 */}
                         {isMine && (
                             <Button
                                 variant="secondary"
@@ -276,7 +345,7 @@ export default function EditionDetailPage() {
                         </>
                     )}
 
-                    {/* 내 에디션 상세 정보 */}
+                    {/* 내 에디션에서만 상세 메타 정보 */}
                     {isMine && (
                         <>
                             <div className="mt-[25px] border border-frame bg-white px-[18px] py-[16px]">
@@ -332,6 +401,7 @@ export default function EditionDetailPage() {
     const renderCuration = () => (
         <section className="mt-[28px]">
             <div className="grid grid-cols-[420px_minmax(0,1fr)] gap-[42px] max-[900px]:grid-cols-1">
+                {/* 기본 정보와 동일한 이미지 */}
                 <div className="border border-frame bg-white p-[14px]">
                     <div className="flex h-[390px] items-center justify-center bg-[#d4c2a6]">
                         {edition.images?.image2d ? (
@@ -403,7 +473,9 @@ export default function EditionDetailPage() {
                                 <>
                                     <button
                                         type="button"
-                                        onClick={() => setTab('info')}
+                                        onClick={() =>
+                                            setTab('info')
+                                        }
                                         className={`relative cursor-pointer border-0 bg-transparent px-0 pb-[4px] text-[11px] ${tab === 'info'
                                                 ? 'text-ink'
                                                 : 'text-ink/40'
@@ -418,7 +490,9 @@ export default function EditionDetailPage() {
 
                                     <button
                                         type="button"
-                                        onClick={() => setTab('curation')}
+                                        onClick={() =>
+                                            setTab('curation')
+                                        }
                                         className={`relative cursor-pointer border-0 bg-transparent px-0 pb-[4px] text-[11px] ${tab === 'curation'
                                                 ? 'text-ink'
                                                 : 'text-ink/40'
@@ -434,7 +508,7 @@ export default function EditionDetailPage() {
                             )}
                         </div>
 
-                        {/* 다른 사람은 무조건 기본 정보만 */}
+                        {/* 다른 사람은 기본 정보만 */}
                         {!isMine
                             ? renderInfo()
                             : tab === 'info'
@@ -444,11 +518,11 @@ export default function EditionDetailPage() {
                 </div>
             </main>
 
-            {/* 공개 설정 모달도 내 에디션에서만 */}
+            {/* 공개 설정 모달은 내 에디션에서만 */}
             {isMine && pendingPublicState !== null && (
-                <div
+                <dialog
+                    open
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-[20px]"
-                    role="dialog"
                     aria-modal="true"
                 >
                     <div className="w-full max-w-[390px] border border-frame bg-paper p-[26px] shadow-[0_18px_50px_rgba(24,19,15,.18)]">
@@ -468,22 +542,35 @@ export default function EditionDetailPage() {
                                 : '비공개로 변경하면 커뮤니티에서 더 이상 이 에디션이 노출되지 않습니다.'}
                         </p>
 
+                        {visibilityError && (
+                            <p
+                                className="mt-[10px] mb-0 text-[9px] text-[#8c3b33]"
+                                role="alert"
+                            >
+                                {visibilityError}
+                            </p>
+                        )}
+
                         <div className="mt-[24px] grid grid-cols-2 gap-[10px]">
                             <Button
                                 variant="secondary"
                                 onClick={handleCancelVisibility}
+                                disabled={visibilityPending}
                             >
                                 취소
                             </Button>
 
                             <Button
                                 onClick={handleConfirmVisibility}
+                                disabled={visibilityPending}
                             >
-                                변경
+                                {visibilityPending
+                                    ? '변경 중'
+                                    : '변경'}
                             </Button>
                         </div>
                     </div>
-                </div>
+                </dialog>
             )}
         </>
     )

@@ -1,5 +1,6 @@
 import { useParams } from 'react-router'
 
+import { useEffect, useState } from 'react'
 import Header from '../../components/Header'
 import Button from '../../components/Button'
 
@@ -9,6 +10,7 @@ import ClothingSection from './components/ClothingSection'
 
 import { editions } from '../../data/editions'
 import { colorOf, loadTheme } from '../../data/collectionTheme'
+import { getMyPublicSettings, updateCollectionVisibility } from '../../api/publicSettings'
 
 export default function CollectionPage() {
     const { userId } = useParams()
@@ -21,10 +23,53 @@ export default function CollectionPage() {
         nickname: '닉네임',
     }
 
-    // 현재는 정적 페이지이므로 동일 테마 사용
-    // 추후 다른 사용자 컬렉션 API에서 테마 정보 받아오도록 변경
-    const theme = loadTheme()
+    const [collectionPublic, setCollectionPublic] =
+        useState(false)
 
+    const [visibilityPending, setVisibilityPending] =
+        useState(false)
+
+    const [visibilityError, setVisibilityError] =
+        useState('')
+
+    useEffect(() => {
+        // 내 컬렉션일 때만 공개 설정 조회
+        if (!isMine) return
+
+        getMyPublicSettings()
+            .then(({ collection }) =>
+                setCollectionPublic(collection.isPublic),
+            )
+            .catch((error) =>
+                setVisibilityError(error.message),
+            )
+    }, [isMine])
+
+    const handleCollectionVisibility = async () => {
+        const next = !collectionPublic
+
+        const message = next
+            ? '컬렉션 전체를 커뮤니티에 공개하시겠습니까?'
+            : '컬렉션 전체를 비공개로 전환하시겠습니까?'
+
+        if (!window.confirm(message)) return
+
+        setVisibilityPending(true)
+        setVisibilityError('')
+
+        try {
+            const setting =
+                await updateCollectionVisibility(next)
+
+            setCollectionPublic(setting.isPublic)
+        } catch (error) {
+            setVisibilityError(error.message)
+        } finally {
+            setVisibilityPending(false)
+        }
+    }
+
+    const theme = loadTheme()
     const accessoryEditions = editions.filter(
         (edition) => edition.mainCategory === 'accessory',
     )
@@ -178,15 +223,24 @@ export default function CollectionPage() {
 
                                 <button
                                     type="button"
-                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white"
+                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white disabled:cursor-default disabled:opacity-50"
+                                    aria-pressed={collectionPublic}
+                                    disabled={visibilityPending}
+                                    onClick={handleCollectionVisibility}
                                 >
-                                    SHARE
-                                    <br />
-                                    COLLECTION
-                                </button>
-                            </aside>
-                        </div>
-                    </section>
+                                    {collectionPublic ? 'COLLECTION IS' : 'SHARE YOUR'}
+                                    < br />
+                                    {collectionPublic ? 'PUBLIC' : 'COLLECTION'}
+                                </button >
+                                {visibilityError && (
+                                    <p className="mt-[8px] mb-0 text-[8px] leading-[1.5] text-[#8c3b33]" role="alert">
+                                        {visibilityError}
+                                    </p>
+                                )
+                                }
+                            </aside >
+                        </div >
+                    </section >
 
                     <div className="mt-[18px] flex items-center justify-between gap-[20px] text-[8px] tracking-[.16em] text-ink/45">
                         <span>
@@ -195,8 +249,8 @@ export default function CollectionPage() {
 
                         <span>MEMORY ATELIER</span>
                     </div>
-                </div>
-            </main>
+                </div >
+            </main >
         </>
     )
 }
