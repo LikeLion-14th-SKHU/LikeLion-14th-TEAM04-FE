@@ -10,12 +10,14 @@ export function saveTokens(tokens, remember) {
   const [store, other] = remember
     ? [localStorage, sessionStorage]
     : [sessionStorage, localStorage]
+
   other.removeItem(KEY)
   store.setItem(KEY, JSON.stringify(tokens))
 }
 
 export function getTokens() {
   const raw = localStorage.getItem(KEY) ?? sessionStorage.getItem(KEY)
+
   try {
     return raw ? JSON.parse(raw) : null
   } catch {
@@ -29,52 +31,115 @@ export function clearTokens() {
 }
 
 async function request(path, { method, body, token }) {
+  // 프로필 이미지 업로드처럼 FormData가 들어오는 요청인지 확인한다.
+  const isFormData = body instanceof FormData
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
+
     headers: {
-      ...(body && { 'Content-Type': 'application/json' }),
-      ...(token && { Authorization: `Bearer ${token}` }),
+      // FormData일 때 Content-Type을 직접 넣으면 boundary가 빠지므로
+      // 브라우저가 자동으로 설정하도록 둔다.
+      ...(body &&
+        !isFormData && {
+        'Content-Type': 'application/json',
+      }),
+
+      ...(token && {
+        Authorization: `Bearer ${token}`,
+      }),
     },
-    body: body && JSON.stringify(body),
+
+    // 일반 객체는 JSON으로 보내고 FormData는 그대로 보낸다.
+    body: body
+      ? isFormData
+        ? body
+        : JSON.stringify(body)
+      : undefined,
   }).catch(() => {
-    // fetch 자체가 실패하면(오프라인·CORS) 브라우저의 영문 메시지가 화면에 뜬다
-    throw new Error('서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.')
+    throw new Error(
+      '서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.',
+    )
   })
+
+  // DELETE /me 같은 204 No Content 응답은 body가 없다.
+  if (res.status === 204) {
+    return null
+  }
+
   const json = await res.json().catch(() => null)
-  if (!res.ok || json?.success !== true) {
+
+  if (!res.ok) {
     const error = new Error(json?.message ?? '요청에 실패했습니다.')
     error.status = res.status
     throw error
   }
-  return json.data
+
+  // 공통 응답 형식이면 data만 반환
+  if (json?.success === true) {
+    return json.data
+  }
+
+  // 일부 API가 데이터를 바로 반환하는 경우
+  return json
 }
 
 // 모든 응답은 { success, code, message, data } 봉투다 — 벗겨서 data 만 돌려준다
-export async function api(path, { method = 'GET', body, auth } = {}) {
+export async function api(
+  path,
+  { method = 'GET', body, auth } = {},
+) {
   try {
-    return await request(path, { method, body, token: auth && getTokens()?.accessToken })
+    return await request(path, {
+      method,
+      body,
+      token: auth && getTokens()?.accessToken,
+    })
   } catch (error) {
-    if (!auth || error.status !== 401) throw error
+    if (!auth || error.status !== 401) {
+      throw error
+    }
 
-    // 순환 import 를 피하려고 재발급은 여기서 직접 부른다. 재시도는 딱 1회 — 무한 루프 금지
+    // 순환 import 를 피하려고 재발급은 여기서 직접 부른다.
+    // 재시도는 딱 1회 — 무한 루프 금지
     const refreshToken = getTokens()?.refreshToken
+
     if (!refreshToken) {
       clearTokens()
       throw error
     }
+
     let accessToken
+
     try {
-      ;({ accessToken } = await request('/auth/reissue', {
+      ; ({ accessToken } = await request('/auth/reissue', {
         method: 'POST',
-        body: { refreshToken },
+        body: {
+          refreshToken,
+        },
       }))
     } catch {
       clearTokens()
       throw error
     }
-    // 리프레시 토큰은 로테이션되지 않는다 — 저장돼 있던 쪽에 그대로 다시 쓴다
-    const store = localStorage.getItem(KEY) ? localStorage : sessionStorage
-    store.setItem(KEY, JSON.stringify({ accessToken, refreshToken }))
-    return request(path, { method, body, token: accessToken })
+
+    // 리프레시 토큰은 로테이션되지 않는다.
+    const store = localStorage.getItem(KEY)
+      ? localStorage
+      : sessionStorage
+
+    store.setItem(
+      KEY,
+      JSON.stringify({
+        accessToken,
+        refreshToken,
+      }),
+    )
+
+    return request(path, {
+      method,
+      body,
+      token: accessToken,
+    })
   }
 }
