@@ -1,4 +1,4 @@
-import { api, BASE_URL } from './client'
+import { api } from './client'
 
 export const signup = (body) => api('/auth/signup', { method: 'POST', body })
 
@@ -37,7 +37,7 @@ export function startOAuth(provider, remember) {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
-    redirect_uri: `${BASE_URL}/auth/${provider}/callback`,
+    redirect_uri: `${window.location.origin}/auth/${provider}/callback`,
     state,
   })
   if (provider === 'google') params.set('scope', 'openid email profile')
