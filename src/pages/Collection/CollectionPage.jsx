@@ -1,3 +1,5 @@
+import { useParams } from 'react-router'
+
 import Header from '../../components/Header'
 import Button from '../../components/Button'
 
@@ -9,8 +11,20 @@ import { editions } from '../../data/editions'
 import { colorOf, loadTheme } from '../../data/collectionTheme'
 
 export default function CollectionPage() {
-    // 테마 화면에서 저장한 값 — 화면을 옮겨 올 때마다 다시 읽는다
+    const { userId } = useParams()
+
+    // userId가 없으면 내 컬렉션
+    const isMine = !userId
+
+    // TODO: 추후 사용자 조회 API 데이터로 교체
+    const owner = {
+        nickname: '닉네임',
+    }
+
+    // 현재는 정적 페이지이므로 동일 테마 사용
+    // 추후 다른 사용자 컬렉션 API에서 테마 정보 받아오도록 변경
     const theme = loadTheme()
+
     const accessoryEditions = editions.filter(
         (edition) => edition.mainCategory === 'accessory',
     )
@@ -37,33 +51,40 @@ export default function CollectionPage() {
                     <div className="flex items-end justify-between gap-[24px] max-[860px]:flex-col max-[860px]:items-stretch">
                         <div>
                             <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
-                                {theme.title}
+                                {isMine
+                                    ? theme.title
+                                    : `${owner.nickname}의 컬렉션`}
                             </h1>
 
                             <p className="mt-[12px] mb-0 text-[13px] leading-[1.7] text-ink/60">
-                                추억을 담은 에디션을 나만의 컬렉션에서 확인하세요.
+                                {isMine
+                                    ? '추억을 담은 에디션을 나만의 컬렉션에서 확인하세요.'
+                                    : `${owner.nickname}님의 추억이 담긴 에디션을 확인해보세요.`}
                             </p>
                         </div>
 
-                        <div className="flex gap-[10px] max-[540px]:flex-col">
-                            <Button href="/edition/create">
-                                + 새 에디션 만들기
-                            </Button>
+                        {/* 내 컬렉션에서만 생성 / 테마 변경 가능 */}
+                        {isMine && (
+                            <div className="flex gap-[10px] max-[540px]:flex-col">
+                                <Button href="/edition/create">
+                                    + 새 에디션 만들기
+                                </Button>
 
-                            <Button
-                                href="/collection/theme"
-                                variant="secondary"
-                            >
-                                테마 변경
-                            </Button>
-                        </div>
+                                <Button
+                                    href="/collection/theme"
+                                    variant="secondary"
+                                >
+                                    테마 변경
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* 진열장 바탕이 테마 색이다 — 선반·사이드 카드는 저마다 배경이 있어
-                        어떤 색을 골라도 그 위의 글자가 묻히지 않는다 */}
                     <section
                         className="mt-[24px] border border-[rgba(24,19,15,.12)] p-[20px] shadow-[0_14px_30px_rgba(44,26,15,.12)]"
-                        style={{ backgroundColor: colorOf(theme.color).hex }}
+                        style={{
+                            backgroundColor: colorOf(theme.color).hex,
+                        }}
                     >
                         <div className="grid grid-cols-[200px_minmax(0,1fr)_165px] items-stretch gap-[14px] max-[1050px]:grid-cols-[180px_minmax(0,1fr)] max-[760px]:grid-cols-1">
                             <AccessorySection
@@ -72,6 +93,7 @@ export default function CollectionPage() {
 
                             <div className="flex min-w-0 flex-col">
                                 <BagSection items={bagEditions} />
+
                                 <ClothingSection
                                     items={clothingEditions}
                                 />
@@ -86,7 +108,9 @@ export default function CollectionPage() {
                                     />
 
                                     <p className="mt-[8px] mb-0 text-[7px] tracking-[.26em] text-ink/50">
-                                        MY COLLECTION
+                                        {isMine
+                                            ? 'MY COLLECTION'
+                                            : 'COLLECTION'}
                                     </p>
                                 </div>
 
@@ -99,13 +123,18 @@ export default function CollectionPage() {
                                         {editions.length}
                                     </p>
 
-                                    <p className="mt-[13px] mb-0 text-[7px] tracking-[.16em] text-ink/45">
-                                        보유 크레딧
-                                    </p>
+                                    {/* 크레딧은 내 컬렉션에서만 */}
+                                    {isMine && (
+                                        <>
+                                            <p className="mt-[13px] mb-0 text-[7px] tracking-[.16em] text-ink/45">
+                                                보유 크레딧
+                                            </p>
 
-                                    <p className="mt-[5px] mb-0 font-brand text-[25px]">
-                                        127
-                                    </p>
+                                            <p className="mt-[5px] mb-0 font-brand text-[25px]">
+                                                127
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="border-b border-[#d9c9b7] py-[15px]">
@@ -116,7 +145,10 @@ export default function CollectionPage() {
                                     <div className="mt-[10px] flex h-[90px] items-center justify-center bg-[#cdbb9f]">
                                         {latestEdition?.images?.transparent ? (
                                             <img
-                                                src={latestEdition.images.transparent}
+                                                src={
+                                                    latestEdition.images
+                                                        .transparent
+                                                }
                                                 alt=""
                                                 className="h-[90%] w-[90%] object-contain"
                                             />
@@ -148,7 +180,7 @@ export default function CollectionPage() {
                                     type="button"
                                     className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white"
                                 >
-                                    SHARE YOUR
+                                    SHARE
                                     <br />
                                     COLLECTION
                                 </button>

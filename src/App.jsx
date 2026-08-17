@@ -34,6 +34,7 @@ export default function App() {
       <Route path="/" element={<AuthPage />} />
 
       <Route path="/collection" element={<CollectionPage />} />
+      <Route path="/users/:userId/collection" element={<CollectionPage />} />
       <Route path="/collection/theme" element={<CollectionThemePage />} />
 
       <Route path="/edition/create" element={<EditionCreatePage />} />
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/edition/create/complete" element={<EditionCompletePage />} />
 
       <Route path="/edition/:editionId" element={<EditionDetailPage />} />
+      <Route path="/users/:userId/edition/:editionId" element={<EditionDetailPage />} />
       <Route path="/edition/:editionId/certificate" element={<CertificatePage />} />
 
       <Route path="/community" element={<CommunityPage />} />
