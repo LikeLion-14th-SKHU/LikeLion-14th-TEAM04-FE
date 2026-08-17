@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
+import OwnerHeading from './components/OwnerHeading'
 import EditionCard from './components/EditionCard'
 import { getCommunityEditions, getPublicCollections } from '../../api/community'
 import { demoSearch } from '../../data/demoCommunity'
@@ -57,10 +57,9 @@ export default function CommunityPage() {
 
   // 닉네임이 맞은 사람은 카드를 그 사람 컬렉션으로 묶고, 남은 카드는 에디션명이 맞은 것들이다
   const searchSections = [
-    ...people.map(({ userId, nickname, shareToken }) => ({
+    ...people.map(({ userId, nickname, profileImageUrl, shareToken }) => ({
       id: `owner-${userId}`,
-      eyebrow: 'COLLECTION',
-      title: `${nickname}의 컬렉션`,
+      owner: { nickname, profileImageUrl },
       href: `/community/collection/${shareToken}`,
       items: editions.filter((edition) => edition.ownerNickname === nickname).map(toCard),
     })),
@@ -157,16 +156,12 @@ export default function CommunityPage() {
               </p>
             )}
 
-            {!loading && !error && sections.map(({ id, eyebrow, title, href, items }) => (
+            {!loading && !error && sections.map(({ id, eyebrow, title, owner, href, items }) => (
               <section key={id} aria-labelledby={`${id}-heading`}>
-                <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
-                {href && (
-                  <Link
-                    className="mt-[10px] inline-block text-[12px] text-[#5b4130] no-underline transition-colors duration-700 ease-film hover:text-ink"
-                    to={href}
-                  >
-                    진열장 전체 보기 →
-                  </Link>
+                {owner ? (
+                  <OwnerHeading id={`${id}-heading`} href={href} {...owner} />
+                ) : (
+                  <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
                 )}
                 {items.length === 0 ? (
                   <p className="m-0 py-[20px] text-[12px] text-muted">공개된 카드가 없습니다.</p>
