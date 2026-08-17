@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
 import Header from '../../components/Header'
@@ -7,6 +7,7 @@ import Button from '../../components/Button'
 import CurationCard from './components/CurationCard'
 
 import { editions } from '../../data/editions'
+import { getMyPublicSettings, updateCardVisibility } from '../../api/publicSettings'
 
 export default function EditionDetailPage() {
     const { editionId } = useParams()
@@ -29,6 +30,29 @@ export default function EditionDetailPage() {
 
     const [pendingPublicState, setPendingPublicState] =
         useState(null)
+
+    const [visibilityLoading, setVisibilityLoading] =
+        useState(true)
+
+    const [visibilityPending, setVisibilityPending] =
+        useState(false)
+
+    const [visibilityError, setVisibilityError] =
+        useState('')
+
+    useEffect(() => {
+        if (!edition) return
+
+        getMyPublicSettings()
+            .then((settings) => {
+                const card = settings.cards.find(
+                    (item) => item.conceptId === edition.concept.id,
+                )
+                setIsPublic(card?.isPublic ?? settings.collection.isPublic)
+            })
+            .catch((error) => setVisibilityError(error.message))
+            .finally(() => setVisibilityLoading(false))
+    }, [edition])
 
     if (!edition) {
         return (
@@ -59,12 +83,21 @@ export default function EditionDetailPage() {
         setPendingPublicState(!isPublic)
     }
 
-    const handleConfirmVisibility = () => {
-        setIsPublic(pendingPublicState)
-
-        // TODO: 공개/비공개 변경 API 연결
-
-        setPendingPublicState(null)
+    const handleConfirmVisibility = async () => {
+        setVisibilityPending(true)
+        setVisibilityError('')
+        try {
+            const setting = await updateCardVisibility(
+                edition.concept.id,
+                pendingPublicState,
+            )
+            setIsPublic(setting.isPublic)
+            setPendingPublicState(null)
+        } catch (error) {
+            setVisibilityError(error.message)
+        } finally {
+            setVisibilityPending(false)
+        }
     }
 
     const handleCancelVisibility = () => {
@@ -162,7 +195,10 @@ export default function EditionDetailPage() {
                                                 <button
                                                     type="button"
                                                     onClick={handleToggleRequest}
-                                                    className={`relative h-[23px] w-[44px] cursor-pointer rounded-full border-0 transition-colors duration-500 ${isPublic
+                                                    disabled={visibilityLoading}
+                                                    aria-label="에디션 공개 설정"
+                                                    aria-pressed={isPublic}
+                                                    className={`relative h-[23px] w-[44px] cursor-pointer rounded-full border-0 transition-colors duration-500 disabled:cursor-default disabled:opacity-50 ${isPublic
                                                         ? 'bg-ink'
                                                         : 'bg-[#d6cec4]'
                                                         }`}
@@ -176,6 +212,11 @@ export default function EditionDetailPage() {
                                                 </button>
                                             </div>
                                         </div>
+                                        {visibilityError && (
+                                            <p className="mt-[8px] mb-0 text-[10px] text-[#8c3b33]" role="alert">
+                                                {visibilityError}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -319,9 +360,9 @@ export default function EditionDetailPage() {
             </main>
 
             {pendingPublicState !== null && (
-                <div
+                <dialog
+                    open
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-[20px]"
-                    role="dialog"
                     aria-modal="true"
                 >
                     <div className="w-full max-w-[390px] border border-frame bg-paper p-[26px] shadow-[0_18px_50px_rgba(24,19,15,.18)]">
@@ -345,18 +386,20 @@ export default function EditionDetailPage() {
                             <Button
                                 variant="secondary"
                                 onClick={handleCancelVisibility}
+                                disabled={visibilityPending}
                             >
                                 취소
                             </Button>
 
                             <Button
                                 onClick={handleConfirmVisibility}
+                                disabled={visibilityPending}
                             >
-                                변경
+                                {visibilityPending ? '변경 중' : '변경'}
                             </Button>
                         </div>
                     </div>
-                </div>
+                </dialog>
             )}
         </>
     )

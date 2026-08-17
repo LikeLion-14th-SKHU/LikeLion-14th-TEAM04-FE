@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "check:auth": "node scripts/check_auth_contract.mjs",
+    "check:community": "node scripts/check_community_api.mjs",
+    "check:public-settings": "node scripts/check_public_settings_contract.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
