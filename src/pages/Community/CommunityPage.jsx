@@ -1,43 +1,66 @@
+import { useEffect, useState } from 'react'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
 import EditionCard from './components/EditionCard'
+import { getCommunityEditions } from '../../api/community'
 
-import { editions } from '../../data/editions'
-
-// 카드에서 상세로 넘어가야 해서 실제 에디션 데이터로 만든다 — 더미 목록은
-// 상세에 없는 에디션이라 눌러도 "찾을 수 없습니다" 로 떨어졌다.
-// TODO: 공개 에디션 목록 API 연동 (지금은 앞의 3개씩)
 const toCard = (edition) => ({
-  id: edition.id,
-  title: edition.name,
-  subtitle: `${edition.material} · ${edition.subCategory}`,
-  likes: edition.likes,
-  image: edition.images.transparent,
+  id: edition.conceptId,
+  title: edition.editionName,
+  subtitle: `${edition.category} · ${edition.ownerNickname}`,
+  likes: edition.likeCount,
+  image: edition.imageUrl,
 })
 
-const SECTIONS = [
-  {
-    id: 'popular',
-    eyebrow: 'POPULAR',
-    title: '인기 에디션',
-    items: [...editions]
-      .sort((a, b) => b.likes - a.likes)
-      .slice(0, 3)
-      .map(toCard),
-  },
-  {
-    id: 'latest',
-    eyebrow: 'LATEST',
-    title: '최신 에디션',
-    items: [...editions]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 3)
-      .map(toCard),
-  },
-]
-
 export default function CommunityPage() {
+  const [editions, setEditions] = useState([])
+  const [query, setQuery] = useState('')
+  const [keyword, setKeyword] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError('')
+
+    getCommunityEditions({ keyword })
+      .then((page) => {
+        if (!cancelled) setEditions(page.content ?? [])
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [keyword])
+
+  // ponytail: 운영 API의 sort 파라미터가 Pageable과 충돌해 500을 내므로,
+  // 백엔드가 파라미터를 분리할 때까지 받아온 최신 100개 안에서 인기순을 계산한다.
+  const sections = [
+    {
+      id: 'popular',
+      eyebrow: 'POPULAR',
+      title: '인기 에디션',
+      items: [...editions]
+        .sort((a, b) => b.likeCount - a.likeCount)
+        .slice(0, 3)
+        .map(toCard),
+    },
+    {
+      id: 'latest',
+      eyebrow: 'LATEST',
+      title: '최신 에디션',
+      items: editions.slice(0, 3).map(toCard),
+    },
+  ]
+
   return (
     // Header 를 main 밖에 둔다 — main 안의 <header> 는 banner 랜드마크로 안 잡힌다
     <>
@@ -57,9 +80,13 @@ export default function CommunityPage() {
                 </p>
               </div>
 
-              {/* 시각적으로는 placeholder 만 보이지만 라벨은 남긴다.
-                  검색 API 가 없어 제출 동작은 아직 없다. TODO: 검색 API 연동 */}
-              <search className="flex h-[42px] w-[246px] shrink-0 items-center gap-[8px] border border-[#dcd3c5] bg-white pr-[13px] pl-[13px] focus-within:border-clay max-[860px]:w-full">
+              <form
+                className="flex h-[42px] w-[246px] shrink-0 items-center gap-[8px] border border-[#dcd3c5] bg-white pr-[13px] pl-[13px] focus-within:border-clay max-[860px]:w-full"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  setKeyword(query.trim())
+                }}
+              >
                 <label className="sr-only" htmlFor="edition-search">
                   에디션 · 닉네임 검색
                 </label>
@@ -80,11 +107,22 @@ export default function CommunityPage() {
                   name="q"
                   type="search"
                   placeholder="에디션 · 닉네임 검색"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
                 />
-              </search>
+                <button className="sr-only" type="submit">검색</button>
+              </form>
             </div>
 
-            {SECTIONS.map(({ id, eyebrow, title, items }) => (
+            {loading && <p className="m-0 py-[36px] text-center text-[12px] text-muted">불러오는 중입니다.</p>}
+            {error && <p className="m-0 py-[36px] text-center text-[12px] text-cognac" role="alert">{error}</p>}
+            {!loading && !error && editions.length === 0 && (
+              <p className="m-0 py-[36px] text-center text-[12px] text-muted">
+                {keyword ? '검색 결과가 없습니다.' : '아직 공개된 에디션이 없습니다.'}
+              </p>
+            )}
+
+            {!loading && !error && editions.length > 0 && sections.map(({ id, eyebrow, title, items }) => (
               <section key={id} aria-labelledby={`${id}-heading`}>
                 <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
                 <ul className="mt-[16px] grid list-none grid-cols-3 gap-[20px] p-0 max-[1000px]:grid-cols-2 max-[640px]:grid-cols-1">

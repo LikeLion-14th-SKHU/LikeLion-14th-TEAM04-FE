@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import Header from '../../components/Header'
 import Button from '../../components/Button'
 
@@ -7,8 +8,38 @@ import ClothingSection from './components/ClothingSection'
 
 import { editions } from '../../data/editions'
 import { colorOf, loadTheme } from '../../data/collectionTheme'
+import { getMyPublicSettings, updateCollectionVisibility } from '../../api/publicSettings'
 
 export default function CollectionPage() {
+    const [collectionPublic, setCollectionPublic] = useState(false)
+    const [visibilityPending, setVisibilityPending] = useState(false)
+    const [visibilityError, setVisibilityError] = useState('')
+
+    useEffect(() => {
+        getMyPublicSettings()
+            .then(({ collection }) => setCollectionPublic(collection.isPublic))
+            .catch((error) => setVisibilityError(error.message))
+    }, [])
+
+    const handleCollectionVisibility = async () => {
+        const next = !collectionPublic
+        const message = next
+            ? '컬렉션 전체를 커뮤니티에 공개하시겠습니까?'
+            : '컬렉션 전체를 비공개로 전환하시겠습니까?'
+        if (!window.confirm(message)) return
+
+        setVisibilityPending(true)
+        setVisibilityError('')
+        try {
+            const setting = await updateCollectionVisibility(next)
+            setCollectionPublic(setting.isPublic)
+        } catch (error) {
+            setVisibilityError(error.message)
+        } finally {
+            setVisibilityPending(false)
+        }
+    }
+
     // 테마 화면에서 저장한 값 — 화면을 옮겨 올 때마다 다시 읽는다
     const theme = loadTheme()
     const accessoryEditions = editions.filter(
@@ -146,12 +177,20 @@ export default function CollectionPage() {
 
                                 <button
                                     type="button"
-                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white"
+                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white disabled:cursor-default disabled:opacity-50"
+                                    aria-pressed={collectionPublic}
+                                    disabled={visibilityPending}
+                                    onClick={handleCollectionVisibility}
                                 >
-                                    SHARE YOUR
+                                    {collectionPublic ? 'COLLECTION IS' : 'SHARE YOUR'}
                                     <br />
-                                    COLLECTION
+                                    {collectionPublic ? 'PUBLIC' : 'COLLECTION'}
                                 </button>
+                                {visibilityError && (
+                                    <p className="mt-[8px] mb-0 text-[8px] leading-[1.5] text-[#8c3b33]" role="alert">
+                                        {visibilityError}
+                                    </p>
+                                )}
                             </aside>
                         </div>
                     </section>
