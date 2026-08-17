@@ -5,6 +5,7 @@ import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 import InputModal from '../../components/InputModal'
 import CreditTopUpModal from './components/CreditTopUpModal'
+import ConfirmModal from '../../components/ConfirmModal'
 import {
   getMe,
   updateMe,
@@ -50,6 +51,8 @@ export default function MyPage() {
 
   // 공통 입력 모달
   const [editModal, setEditModal] = useState(null)
+
+  const [withdrawOpen, setWithdrawOpen] = useState(false)
 
   // 알림 설정은 API가 없어 화면 상태만 유지
   const [notify, setNotify] = useState({
@@ -224,18 +227,13 @@ export default function MyPage() {
   // DELETE /me
   // -------------------------
   const handleWithdraw = async () => {
-    const confirmed = window.confirm(
-      '회원 탈퇴 시 모든 에디션과 컬렉션이 삭제되며 되돌릴 수 없습니다. 탈퇴하시겠습니까?',
-    )
-
-    if (!confirmed) return
-
     try {
       await deleteMe()
 
       localStorage.clear()
       sessionStorage.clear()
 
+      setWithdrawOpen(false)
       navigate('/')
     } catch (err) {
       console.error('회원 탈퇴 실패:', err)
@@ -243,6 +241,7 @@ export default function MyPage() {
       if (err.status === 401) {
         setUser(null)
         setUnauthorized(true)
+        setWithdrawOpen(false)
         return
       }
 
@@ -484,7 +483,7 @@ export default function MyPage() {
                       <button
                         className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[12px] text-ink/45 underline transition-colors duration-700 ease-film hover:text-[#8c3b33]"
                         type="button"
-                        onClick={handleWithdraw}
+                        onClick={() => setWithdrawOpen(true)}
                       >
                         회원 탈퇴
                       </button>
@@ -616,6 +615,15 @@ export default function MyPage() {
         confirmText={editModal?.confirmText}
         onClose={() => setEditModal(null)}
         onConfirm={handleEditConfirm}
+      />
+      <ConfirmModal
+        open={withdrawOpen}
+        title="회원 탈퇴"
+        description="회원 탈퇴 시 모든 에디션과 컬렉션이 삭제되며 되돌릴 수 없습니다. 정말 탈퇴하시겠습니까?"
+        confirmText="탈퇴하기"
+        cancelText="취소"
+        onConfirm={handleWithdraw}
+        onClose={() => setWithdrawOpen(false)}
       />
     </>
   )
