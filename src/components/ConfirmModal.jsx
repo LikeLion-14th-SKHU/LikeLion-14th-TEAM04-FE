@@ -69,13 +69,17 @@ export default function ConfirmModal({
             </div>
 
             <div className="mt-[24px] flex justify-end gap-[9px]">
-                <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={onClose}
-                >
-                    {cancelText}
-                </Button>
+
+                {/* cancelText가 있을 때만 취소 버튼 표시 */}
+                {cancelText && (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={onClose}
+                    >
+                        {cancelText}
+                    </Button>
+                )}
 
                 <Button
                     type="button"
