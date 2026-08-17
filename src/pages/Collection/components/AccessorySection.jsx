@@ -56,7 +56,7 @@ export default function AccessorySection({
                         item ? (
                             <Link
                                 key={item.id}
-                                to={`/edition/${item.id}`}
+                                to={item.href ?? `/edition/${item.id}`}
                                 className="group flex aspect-square cursor-pointer items-center justify-center border border-[#d7c8b5] bg-[#e7dbc8] p-[4px] no-underline transition-colors duration-700 ease-film hover:bg-white"
                                 aria-label={`${item.name} 보기`}
                             >

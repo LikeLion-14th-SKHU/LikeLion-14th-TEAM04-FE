@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
 import EditionCard from './components/EditionCard'
 import { getCommunityEditions, getPublicCollections } from '../../api/community'
+import { demoSearch } from '../../data/demoCommunity'
 
 const toCard = (edition) => ({
   id: edition.conceptId,
@@ -33,8 +35,13 @@ export default function CommunityPage() {
     ])
       .then(([page, collections]) => {
         if (cancelled) return
-        setEditions(page.content ?? [])
-        setPeople(collections?.content ?? [])
+        // 백엔드에 공개 카드가 하나도 없으면 가상 데이터로 채운다
+        const demo =
+          !page.content?.length && !collections?.content?.length
+            ? demoSearch(keyword)
+            : { editions: [], people: [] }
+        setEditions(page.content?.length ? page.content : demo.editions)
+        setPeople(collections?.content?.length ? collections.content : demo.people)
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -50,10 +57,11 @@ export default function CommunityPage() {
 
   // 닉네임이 맞은 사람은 카드를 그 사람 컬렉션으로 묶고, 남은 카드는 에디션명이 맞은 것들이다
   const searchSections = [
-    ...people.map(({ userId, nickname }) => ({
+    ...people.map(({ userId, nickname, shareToken }) => ({
       id: `owner-${userId}`,
       eyebrow: 'COLLECTION',
       title: `${nickname}의 컬렉션`,
+      href: `/community/collection/${shareToken}`,
       items: editions.filter((edition) => edition.ownerNickname === nickname).map(toCard),
     })),
     {
@@ -149,9 +157,17 @@ export default function CommunityPage() {
               </p>
             )}
 
-            {!loading && !error && sections.map(({ id, eyebrow, title, items }) => (
+            {!loading && !error && sections.map(({ id, eyebrow, title, href, items }) => (
               <section key={id} aria-labelledby={`${id}-heading`}>
                 <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
+                {href && (
+                  <Link
+                    className="mt-[10px] inline-block text-[12px] text-[#5b4130] no-underline transition-colors duration-700 ease-film hover:text-ink"
+                    to={href}
+                  >
+                    진열장 전체 보기 →
+                  </Link>
+                )}
                 {items.length === 0 ? (
                   <p className="m-0 py-[20px] text-[12px] text-muted">공개된 카드가 없습니다.</p>
                 ) : (

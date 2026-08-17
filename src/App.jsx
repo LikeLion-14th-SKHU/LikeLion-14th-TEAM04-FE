@@ -52,6 +52,8 @@ export default function App() {
 
       <Route path="/community" element={<CommunityPage />} />
       <Route path="/community/edition/:conceptId" element={<CommunityEditionPage />} />
+      {/* 남의 진열장 — 컬렉션 전체를 공개한 사람만 shareToken 이 나온다 */}
+      <Route path="/community/collection/:shareToken" element={<CollectionPage />} />
 
       <Route path="/mypage" element={<MyPage />} />
 

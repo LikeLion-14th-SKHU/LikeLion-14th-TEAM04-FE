@@ -14,6 +14,10 @@ export function getPublicCollections({ nickname = '', page = 0, size = 20 } = {}
   return api(`/community/collections?${params}`)
 }
 
+// 남의 옷장. 보증서가 발급된 공개 카드만 내려온다
+export const getSharedView = (shareToken, { page = 0, size = 100 } = {}) =>
+  api(`/community/shared/${shareToken}?${new URLSearchParams({ page, size })}`)
+
 export const getCommunityEdition = (conceptId) => api(`/community/editions/${conceptId}`)
 
 export const getLikeStatus = (conceptId) =>

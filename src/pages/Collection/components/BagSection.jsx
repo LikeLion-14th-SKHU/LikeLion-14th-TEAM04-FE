@@ -56,7 +56,7 @@ export default function BagSection({
                         item ? (
                             <Link
                                 key={item.id}
-                                to={`/edition/${item.id}`}
+                                to={item.href ?? `/edition/${item.id}`}
                                 className="group relative flex h-[125px] cursor-pointer items-center justify-center overflow-hidden border border-[#d7c8b5] bg-[#e8ddcb] p-[4px] no-underline transition-colors duration-700 ease-film hover:bg-white"
                                 aria-label={`${item.name} 보기`}
                             >

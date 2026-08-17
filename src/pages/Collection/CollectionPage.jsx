@@ -9,19 +9,30 @@ import BagSection from './components/BagSection'
 import ClothingSection from './components/ClothingSection'
 
 import { editions } from '../../data/editions'
-import { colorOf, loadTheme } from '../../data/collectionTheme'
+import { colorOf, loadTheme, DEFAULT_THEME } from '../../data/collectionTheme'
 import { getMyPublicSettings, updateCollectionVisibility } from '../../api/publicSettings'
+import { getSharedView } from '../../api/community'
+import { DEMO_PERSON } from '../../data/demoCommunity'
+
+// 공유 카드에는 대분류가 따로 안 오고 보증서의 카테고리 문자열만 온다.
+// ponytail: 모르는 값은 의류 칸으로 보낸다 — 카드가 사라지는 쪽이 더 나쁘다
+const bucketOf = (category = '') =>
+    category.includes('가방')
+        ? 'bag'
+        : category.includes('악세')
+            ? 'accessory'
+            : 'clothing'
 
 export default function CollectionPage() {
-    const { userId } = useParams()
+    const { shareToken, userId } = useParams()
 
-    // userId가 없으면 내 컬렉션
-    const isMine = !userId
+    // 둘 다 없으면 내 컬렉션
+    const isMine = !shareToken && !userId
 
-    // TODO: 추후 사용자 조회 API 데이터로 교체
-    const owner = {
-        nickname: '닉네임',
-    }
+    // 가상 진열장(demo)과 /users/:userId/collection 은 아직 목업을 그대로 보여준다
+    const isMock = shareToken === DEMO_PERSON.shareToken || !!userId
+
+    const [shared, setShared] = useState(null)
 
     const [collectionPublic, setCollectionPublic] =
         useState(false)
@@ -44,6 +55,17 @@ export default function CollectionPage() {
                 setVisibilityError(error.message),
             )
     }, [isMine])
+
+    const [sharedError, setSharedError] = useState('')
+
+    useEffect(() => {
+        if (!shareToken || isMock) return
+
+        // 비공개로 돌리면 여기서 404가 떨어진다 — 그대로 메시지를 보여준다
+        getSharedView(shareToken)
+            .then(setShared)
+            .catch((error) => setSharedError(error.message))
+    }, [shareToken])
 
     const handleCollectionVisibility = async () => {
         const next = !collectionPublic
@@ -69,20 +91,39 @@ export default function CollectionPage() {
         }
     }
 
-    const theme = loadTheme()
-    const accessoryEditions = editions.filter(
+    // 남의 옷장에 내 테마를 입히면 안 된다 — 테마는 아직 localStorage 에만 있다
+    const theme = isMine ? loadTheme() : DEFAULT_THEME
+
+    const owner = {
+        nickname: shared?.ownerNickname ?? (isMock ? DEMO_PERSON.nickname : ''),
+    }
+
+    const sharedEditions = (shared?.cards?.content ?? []).map((card) => ({
+        id: card.conceptId,
+        number: card.certificate?.editionNumber ?? '',
+        name: card.certificate?.editionName ?? '',
+        createdAt: card.certificate?.issuedAt?.slice(0, 10).replaceAll('-', '.') ?? '',
+        images: { transparent: card.gridImageUrl || card.imageUrl },
+        mainCategory: bucketOf(card.certificate?.category),
+        // 남의 카드는 내 에디션 상세가 아니라 커뮤니티 상세로 간다
+        href: `/community/edition/${card.conceptId}`,
+    }))
+
+    const items = isMine || isMock ? editions : sharedEditions
+
+    const accessoryEditions = items.filter(
         (edition) => edition.mainCategory === 'accessory',
     )
 
-    const bagEditions = editions.filter(
+    const bagEditions = items.filter(
         (edition) => edition.mainCategory === 'bag',
     )
 
-    const clothingEditions = editions.filter(
+    const clothingEditions = items.filter(
         (edition) => edition.mainCategory === 'clothing',
     )
 
-    const latestEdition = [...editions].sort(
+    const latestEdition = [...items].sort(
         (a, b) =>
             new Date(b.createdAt) - new Date(a.createdAt),
     )[0]
@@ -165,7 +206,7 @@ export default function CollectionPage() {
                                     </p>
 
                                     <p className="mt-[5px] mb-0 font-brand text-[25px]">
-                                        {editions.length}
+                                        {shared?.cards?.totalElements ?? items.length}
                                     </p>
 
                                     {/* 크레딧은 내 컬렉션에서만 */}
@@ -221,17 +262,25 @@ export default function CollectionPage() {
                                     )}
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white disabled:cursor-default disabled:opacity-50"
-                                    aria-pressed={collectionPublic}
-                                    disabled={visibilityPending}
-                                    onClick={handleCollectionVisibility}
-                                >
-                                    {collectionPublic ? 'COLLECTION IS' : 'SHARE YOUR'}
-                                    < br />
-                                    {collectionPublic ? 'PUBLIC' : 'COLLECTION'}
-                                </button >
+                                {/* 공개 전환은 주인만 한다 */}
+                                {isMine && (
+                                    <button
+                                        type="button"
+                                        className="mt-[13px] flex h-[46px] w-full cursor-pointer items-center justify-center border border-[#d9c9b7] bg-[#efe4d2] px-[4px] text-center text-[6.5px] leading-[1.7] tracking-[.15em] text-ink/55 transition-colors duration-700 ease-film hover:bg-white disabled:cursor-default disabled:opacity-50"
+                                        aria-pressed={collectionPublic}
+                                        disabled={visibilityPending}
+                                        onClick={handleCollectionVisibility}
+                                    >
+                                        {collectionPublic ? 'COLLECTION IS' : 'SHARE YOUR'}
+                                        < br />
+                                        {collectionPublic ? 'PUBLIC' : 'COLLECTION'}
+                                    </button >
+                                )}
+                                {sharedError && (
+                                    <p className="mt-[8px] mb-0 text-[8px] leading-[1.5] text-[#8c3b33]" role="alert">
+                                        {sharedError}
+                                    </p>
+                                )}
                                 {visibilityError && (
                                     <p className="mt-[8px] mb-0 text-[8px] leading-[1.5] text-[#8c3b33]" role="alert">
                                         {visibilityError}
@@ -244,7 +293,9 @@ export default function CollectionPage() {
 
                     <div className="mt-[18px] flex items-center justify-between gap-[20px] text-[8px] tracking-[.16em] text-ink/45">
                         <span>
-                            추억을 연결한 나만의 에디션 컬렉션
+                            {isMine
+                                ? '추억을 연결한 나만의 에디션 컬렉션'
+                                : `${owner.nickname}님의 에디션 컬렉션`}
                         </span>
 
                         <span>MEMORY ATELIER</span>

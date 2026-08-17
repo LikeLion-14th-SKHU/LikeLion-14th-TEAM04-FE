@@ -66,7 +66,7 @@ export default function ClothingSection({
                         item ? (
                             <Link
                                 key={item.id}
-                                to={`/edition/${item.id}`}
+                                to={item.href ?? `/edition/${item.id}`}
                                 className="group relative flex h-[300px] cursor-pointer items-center justify-center border-0 bg-transparent p-0 no-underline"
                                 aria-label={`${item.name} 보기`}
                             >
