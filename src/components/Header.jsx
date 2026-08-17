@@ -1,7 +1,7 @@
 import { Link, NavLink } from 'react-router'
 
 const NAV = [
-  ['/', '홈'],
+  ['/collection', '홈'],
   ['/community', '커뮤니티'],
 ]
 
@@ -11,7 +11,7 @@ export default function Header() {
       <Link
         // 로고 좌우 간격을 헤더 좌우 여백과 같은 식으로 맞춘다
         className="inline-flex items-center gap-[clamp(24px,3vw,56px)] text-inherit no-underline max-[860px]:gap-[22px]"
-        to="/"
+        to="/collection"
         aria-label="Memory Atelier 홈"
       >
         {/* 옆의 서비스명이 이름을 읽어주므로 로고는 장식 취급 (alt="") */}
@@ -33,7 +33,7 @@ export default function Header() {
       <nav className="flex items-center gap-[34px] max-[430px]:gap-[14px]" aria-label="주요 메뉴">
         {NAV.map(([to, label]) => (
           // NavLink 가 현재 메뉴 표시(aria-current="page")를 알아서 붙인다.
-          // "/" 만 end 를 준다 — 없으면 /order 같은 모든 경로에서 홈이 켜진다.
+          // "/collection" 만 end 를 준다 — 없으면 /collection/theme 에서도 홈이 켜진다.
           // "/community" 는 end 를 빼야 끝 슬래시(/community/)에서도 활성으로 잡힌다.
           // 하위 라우트가 없어서 오활성될 경로도 없다
           <NavLink
@@ -43,7 +43,7 @@ export default function Header() {
               `text-[13px] tracking-[.04em] no-underline transition-colors duration-700 ease-film hover:text-cognac max-[430px]:text-[12px] ${isActive ? 'text-ink' : 'text-ink/50'}`
             }
             to={to}
-            end={to === '/'}
+            end={to === '/collection'}
           >
             {label}
           </NavLink>

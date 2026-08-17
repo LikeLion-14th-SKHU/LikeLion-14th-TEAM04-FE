@@ -45,7 +45,7 @@ export default function MyPage() {
   const handleLogout = () => {
     localStorage.clear()
     sessionStorage.clear()
-    navigate('/login')
+    navigate('/')
   }
 
   // ponytail: 되돌릴 수 없는 동작이라 확인은 받되 전용 모달은 안 만든다 —
@@ -56,7 +56,7 @@ export default function MyPage() {
       return
     localStorage.clear()
     sessionStorage.clear()
-    navigate('/login')
+    navigate('/')
   }
 
   return (
