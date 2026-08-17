@@ -43,14 +43,20 @@ export default function CollectionPage() {
     const [visibilityError, setVisibilityError] =
         useState('')
 
+    // 내 공유 토큰 — 라우트 파라미터(shareToken)와 헷갈리지 않게 이름을 따로 둔다
+    const [myShareToken, setMyShareToken] = useState('')
+
+    const [linkCopied, setLinkCopied] = useState(false)
+
     useEffect(() => {
         // 내 컬렉션일 때만 공개 설정 조회
         if (!isMine) return
 
         getMyPublicSettings()
-            .then(({ collection }) =>
-                setCollectionPublic(collection.isPublic),
-            )
+            .then(({ collection }) => {
+                setCollectionPublic(collection.isPublic)
+                setMyShareToken(collection.shareToken)
+            })
             .catch((error) =>
                 setVisibilityError(error.message),
             )
@@ -84,10 +90,26 @@ export default function CollectionPage() {
                 await updateCollectionVisibility(next)
 
             setCollectionPublic(setting.isPublic)
+            setMyShareToken(setting.shareToken)
         } catch (error) {
             setVisibilityError(error.message)
         } finally {
             setVisibilityPending(false)
+        }
+    }
+
+    // 공개한 진열장을 남이 보는 주소 — 커뮤니티 검색에서 들어오는 곳과 같다
+    const handleCopyShareLink = async () => {
+        setVisibilityError('')
+
+        try {
+            await navigator.clipboard.writeText(
+                `${window.location.origin}/community/collection/${myShareToken}`,
+            )
+
+            setLinkCopied(true)
+        } catch {
+            setVisibilityError('링크를 복사하지 못했습니다.')
         }
     }
 
@@ -275,6 +297,16 @@ export default function CollectionPage() {
                                         < br />
                                         {collectionPublic ? 'PUBLIC' : 'COLLECTION'}
                                     </button >
+                                )}
+                                {/* 공개 상태에서만 공유 링크가 의미가 있다 — 비공개면 그 주소는 404 다 */}
+                                {isMine && collectionPublic && myShareToken && (
+                                    <button
+                                        type="button"
+                                        className="mt-[7px] w-full cursor-pointer border border-[#d9c9b7] bg-transparent px-[4px] py-[9px] text-center text-[6.5px] tracking-[.15em] text-ink/45 transition-colors duration-700 ease-film hover:bg-white"
+                                        onClick={handleCopyShareLink}
+                                    >
+                                        {linkCopied ? 'LINK COPIED' : 'COPY SHARE LINK'}
+                                    </button>
                                 )}
                                 {sharedError && (
                                     <p className="mt-[8px] mb-0 text-[8px] leading-[1.5] text-[#8c3b33]" role="alert">
