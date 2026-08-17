@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
+import InputModal from '../../components/InputModal'
 import CreditTopUpModal from './components/CreditTopUpModal'
 import {
   getMe,
@@ -37,18 +38,20 @@ export default function MyPage() {
   const navigate = useNavigate()
   const profileInputRef = useRef(null)
 
-  // 실제 회원 정보
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [unauthorized, setUnauthorized] = useState(false)
 
-  // GET /me에서 실제 보유 크레딧을 가져온다.
-  // 충전 자체는 API가 없으므로 화면에서만 증가한다.
+  // 실제 서버 credit을 초기값으로 사용
+  // 충전 자체는 API가 없어 화면에서만 증가
   const [credit, setCredit] = useState(0)
   const [topUpOpen, setTopUpOpen] = useState(false)
 
-  // 알림 설정 API는 없으므로 화면 상태만 유지
+  // 공통 입력 모달
+  const [editModal, setEditModal] = useState(null)
+
+  // 알림 설정은 API가 없어 화면 상태만 유지
   const [notify, setNotify] = useState({
     edition: true,
     like: true,
@@ -79,11 +82,10 @@ export default function MyPage() {
 
         console.error('내 정보 조회 실패:', err)
 
-        // 로그인하지 않았거나 토큰이 만료된 경우
         if (err.status === 401) {
           setUnauthorized(true)
-          setError('')
           setUser(null)
+          setError('')
         } else {
           setError('회원 정보를 불러오지 못했습니다.')
         }
@@ -103,8 +105,6 @@ export default function MyPage() {
 
   // -------------------------
   // 로그아웃
-  // 별도 로그아웃 API가 없으므로
-  // 브라우저의 로그인 정보 삭제
   // -------------------------
   const handleLogout = () => {
     localStorage.clear()
@@ -113,53 +113,77 @@ export default function MyPage() {
   }
 
   // -------------------------
-  // 닉네임 수정
-  // PATCH /me
+  // 이름 수정 모달 열기
   // -------------------------
-  const handleNicknameEdit = async () => {
-    const currentNickname = user?.nickname ?? ''
+  const openNicknameModal = () => {
+    setEditModal({
+      type: 'nickname',
+      title: '이름 수정',
+      description: '새로운 이름을 입력해주세요.',
+      defaultValue: user?.nickname ?? '',
+      placeholder: '이름 입력',
+      confirmText: '수정',
+    })
+  }
 
-    const nickname = window.prompt(
-      '변경할 닉네임을 입력해주세요.',
-      currentNickname,
-    )
+  // -------------------------
+  // 배송지 입력 모달 열기
+  // -------------------------
+  const openAddressModal = () => {
+    setEditModal({
+      type: 'address',
+      title: '기본 배송지 입력',
+      description: '상품을 받을 기본 배송지를 입력해주세요.',
+      defaultValue: '',
+      placeholder: '배송지 입력',
+      confirmText: '저장',
+    })
+  }
 
-    if (nickname === null) return
+  // -------------------------
+  // 공통 입력 모달 확인
+  // -------------------------
+  const handleEditConfirm = async (value) => {
+    if (!editModal) return
 
-    const trimmedNickname = nickname.trim()
+    // 이름 수정
+    if (editModal.type === 'nickname') {
+      try {
+        const updatedUser = await updateMe(value)
 
-    if (!trimmedNickname) {
-      alert('닉네임을 입력해주세요.')
+        setUser(updatedUser)
+
+        if (updatedUser?.credit !== undefined) {
+          setCredit(updatedUser.credit)
+        }
+
+        setEditModal(null)
+      } catch (err) {
+        console.error('이름 수정 실패:', err)
+
+        if (err.status === 401) {
+          setUser(null)
+          setUnauthorized(true)
+          setEditModal(null)
+          return
+        }
+
+        alert(err.message ?? '이름 수정에 실패했습니다.')
+      }
+
       return
     }
 
-    if (trimmedNickname === currentNickname) return
-
-    try {
-      const updatedUser = await updateMe(trimmedNickname)
-
-      setUser(updatedUser)
-
-      if (updatedUser?.credit !== undefined) {
-        setCredit(updatedUser.credit)
-      }
-    } catch (err) {
-      console.error('닉네임 수정 실패:', err)
-
-      if (err.status === 401) {
-        setUser(null)
-        setUnauthorized(true)
-        return
-      }
-
-      alert(err.message ?? '닉네임 수정에 실패했습니다.')
+    // 배송지 저장 API는 아직 없음
+    if (editModal.type === 'address') {
+      alert('배송지 저장 기능은 아직 지원하지 않습니다.')
+      setEditModal(null)
     }
   }
 
   // -------------------------
   // 프로필 이미지 수정
   // PATCH /me/profile-image
-  // multipart/form-data
   // -------------------------
   const handleProfileImageChange = async (event) => {
     const file = event.target.files?.[0]
@@ -191,7 +215,6 @@ export default function MyPage() {
 
       alert(err.message ?? '프로필 이미지 수정에 실패했습니다.')
     } finally {
-      // 같은 파일을 다시 선택해도 change가 발생하도록 초기화
       event.target.value = ''
     }
   }
@@ -227,34 +250,30 @@ export default function MyPage() {
     }
   }
 
-  // 실제 API에서 제공되는 계정 정보
-  // 이메일 수정 API는 없으므로 닉네임만 수정 가능
-  const handleNotImplemented = () => {
-    alert('아직 지원하지 않는 기능입니다.')
-  }
-
   const accountRows = [
     {
       label: '이름',
       value: user?.nickname ?? '-',
       action: '수정',
-      onClick: handleNicknameEdit,
+      onClick: openNicknameModal,
     },
     {
       label: '이메일',
       value: user?.email ?? '-',
       action: null,
+      onClick: null,
     },
     {
       label: '비밀번호',
       value: '변경 기능을 지원하지 않습니다.',
       action: null,
+      onClick: null,
     },
     {
       label: '기본 배송지',
       value: '입력된 배송지가 없습니다.',
       action: '입력',
-      onClick: handleNotImplemented,
+      onClick: openAddressModal,
     },
   ]
 
@@ -318,7 +337,7 @@ export default function MyPage() {
 
                 <div className="mt-[24px]">
                   <Button onClick={() => navigate('/login')}>
-                    로그인 하러가기
+                    로그인 / 회원가입 하러가기
                   </Button>
                 </div>
               </section>
@@ -395,7 +414,7 @@ export default function MyPage() {
                     </div>
 
                     <div className="flex gap-[9px] max-[860px]:flex-col">
-                      {/* 충전 API 없음 - 화면에서만 동작 */}
+                      {/* 충전은 화면에서만 동작 */}
                       <Button onClick={() => setTopUpOpen(true)}>
                         충전
                       </Button>
@@ -404,7 +423,7 @@ export default function MyPage() {
                         variant="secondary"
                         onClick={() => profileInputRef.current?.click()}
                       >
-                        프로필 이미지 변경
+                        프로필 사진 변경
                       </Button>
 
                       <input
@@ -432,31 +451,33 @@ export default function MyPage() {
                     </h2>
 
                     <ul className="mt-[6px] list-none p-0">
-                      {accountRows.map(({ label, value, action, onClick }) => (
-                        <li
-                          key={label}
-                          className="flex h-[44px] items-center gap-[12px] border-b border-[#f2ebe0]"
-                        >
-                          <span className="w-[110px] shrink-0 text-[12.5px] text-ink/55">
-                            {label}
-                          </span>
+                      {accountRows.map(
+                        ({ label, value, action, onClick }) => (
+                          <li
+                            key={label}
+                            className="flex h-[44px] items-center gap-[12px] border-b border-[#f2ebe0]"
+                          >
+                            <span className="w-[110px] shrink-0 text-[12.5px] text-ink/55">
+                              {label}
+                            </span>
 
-                          <span className="flex-1 truncate text-[12.5px]">
-                            {value}
-                          </span>
+                            <span className="flex-1 truncate text-[12.5px]">
+                              {value}
+                            </span>
 
-                          {action && (
-                            <button
-                              className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[12px] text-[#5b4130] transition-colors duration-700 ease-film hover:text-ink"
-                              type="button"
-                              onClick={onClick}
-                              aria-label={`${label} ${action}`}
-                            >
-                              {action}
-                            </button>
-                          )}
-                        </li>
-                      ))}
+                            {action && (
+                              <button
+                                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[12px] text-[#5b4130] transition-colors duration-700 ease-film hover:text-ink"
+                                type="button"
+                                onClick={onClick}
+                                aria-label={`${label} ${action}`}
+                              >
+                                {action}
+                              </button>
+                            )}
+                          </li>
+                        ),
+                      )}
                     </ul>
 
                     <div className="mt-[18px] flex items-center justify-end gap-[12px]">
@@ -575,7 +596,7 @@ export default function MyPage() {
         </div>
       </main>
 
-      {/* 크레딧 충전 - 실제 결제 API 없음 */}
+      {/* 크레딧 충전 - 실제 API 없음 */}
       <CreditTopUpModal
         open={topUpOpen}
         credit={credit}
@@ -583,6 +604,18 @@ export default function MyPage() {
           setCredit((currentCredit) => currentCredit + amount)
         }
         onClose={() => setTopUpOpen(false)}
+      />
+
+      {/* 이름 / 배송지 공통 입력 모달 */}
+      <InputModal
+        open={Boolean(editModal)}
+        title={editModal?.title}
+        description={editModal?.description}
+        defaultValue={editModal?.defaultValue}
+        placeholder={editModal?.placeholder}
+        confirmText={editModal?.confirmText}
+        onClose={() => setEditModal(null)}
+        onConfirm={handleEditConfirm}
       />
     </>
   )
