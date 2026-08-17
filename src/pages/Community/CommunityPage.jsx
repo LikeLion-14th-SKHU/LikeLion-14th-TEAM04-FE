@@ -3,7 +3,7 @@ import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
 import EditionCard from './components/EditionCard'
-import { getCommunityEditions } from '../../api/community'
+import { getCommunityEditions, getPublicCollections } from '../../api/community'
 
 const toCard = (edition) => ({
   id: edition.conceptId,
@@ -15,6 +15,7 @@ const toCard = (edition) => ({
 
 export default function CommunityPage() {
   const [editions, setEditions] = useState([])
+  const [people, setPeople] = useState([])
   const [query, setQuery] = useState('')
   const [keyword, setKeyword] = useState('')
   const [loading, setLoading] = useState(true)
@@ -25,9 +26,15 @@ export default function CommunityPage() {
     setLoading(true)
     setError('')
 
-    getCommunityEditions({ keyword })
-      .then((page) => {
-        if (!cancelled) setEditions(page.content ?? [])
+    // 피드 keyword 는 에디션명·닉네임을 함께 본다. 사람 목록은 검색할 때만 필요하다
+    Promise.all([
+      getCommunityEditions({ keyword }),
+      keyword ? getPublicCollections({ nickname: keyword }) : null,
+    ])
+      .then(([page, collections]) => {
+        if (cancelled) return
+        setEditions(page.content ?? [])
+        setPeople(collections?.content ?? [])
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -41,9 +48,27 @@ export default function CommunityPage() {
     }
   }, [keyword])
 
+  // 닉네임이 맞은 사람은 카드를 그 사람 컬렉션으로 묶고, 남은 카드는 에디션명이 맞은 것들이다
+  const searchSections = [
+    ...people.map(({ userId, nickname }) => ({
+      id: `owner-${userId}`,
+      eyebrow: 'COLLECTION',
+      title: `${nickname}의 컬렉션`,
+      items: editions.filter((edition) => edition.ownerNickname === nickname).map(toCard),
+    })),
+    {
+      id: 'editions',
+      eyebrow: 'EDITIONS',
+      title: '에디션 검색 결과',
+      items: editions
+        .filter((edition) => !people.some((person) => person.nickname === edition.ownerNickname))
+        .map(toCard),
+    },
+  ].filter((section) => section.id !== 'editions' || section.items.length > 0)
+
   // ponytail: 운영 API의 sort 파라미터가 Pageable과 충돌해 500을 내므로,
   // 백엔드가 파라미터를 분리할 때까지 받아온 최신 100개 안에서 인기순을 계산한다.
-  const sections = [
+  const feedSections = [
     {
       id: 'popular',
       eyebrow: 'POPULAR',
@@ -59,7 +84,9 @@ export default function CommunityPage() {
       title: '최신 에디션',
       items: editions.slice(0, 3).map(toCard),
     },
-  ]
+  ].filter((section) => section.items.length > 0)
+
+  const sections = keyword ? searchSections : feedSections
 
   return (
     // Header 를 main 밖에 둔다 — main 안의 <header> 는 banner 랜드마크로 안 잡힌다
@@ -116,22 +143,26 @@ export default function CommunityPage() {
 
             {loading && <p className="m-0 py-[36px] text-center text-[12px] text-muted">불러오는 중입니다.</p>}
             {error && <p className="m-0 py-[36px] text-center text-[12px] text-cognac" role="alert">{error}</p>}
-            {!loading && !error && editions.length === 0 && (
+            {!loading && !error && sections.length === 0 && (
               <p className="m-0 py-[36px] text-center text-[12px] text-muted">
                 {keyword ? '검색 결과가 없습니다.' : '아직 공개된 에디션이 없습니다.'}
               </p>
             )}
 
-            {!loading && !error && editions.length > 0 && sections.map(({ id, eyebrow, title, items }) => (
+            {!loading && !error && sections.map(({ id, eyebrow, title, items }) => (
               <section key={id} aria-labelledby={`${id}-heading`}>
                 <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
-                <ul className="mt-[16px] grid list-none grid-cols-3 gap-[20px] p-0 max-[1000px]:grid-cols-2 max-[640px]:grid-cols-1">
-                  {items.map((item) => (
-                    <li key={item.id}>
-                      <EditionCard {...item} />
-                    </li>
-                  ))}
-                </ul>
+                {items.length === 0 ? (
+                  <p className="m-0 py-[20px] text-[12px] text-muted">공개된 카드가 없습니다.</p>
+                ) : (
+                  <ul className="mt-[16px] grid list-none grid-cols-3 gap-[20px] p-0 max-[1000px]:grid-cols-2 max-[640px]:grid-cols-1">
+                    {items.map((item) => (
+                      <li key={item.id}>
+                        <EditionCard {...item} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
             ))}
           </Panel>
