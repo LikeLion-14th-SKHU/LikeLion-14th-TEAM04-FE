@@ -76,7 +76,7 @@ export default function EditionCompletePage() {
         sessionStorage.removeItem('edition-form')
         sessionStorage.removeItem('edition-concept')
 
-        navigate('/')
+        navigate('/collection')
     }
 
     return (

@@ -31,8 +31,9 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<CollectionPage />} />
+      <Route path="/" element={<AuthPage />} />
 
+      <Route path="/collection" element={<CollectionPage />} />
       <Route path="/collection/theme" element={<CollectionThemePage />} />
 
       <Route path="/edition/create" element={<EditionCreatePage />} />
@@ -52,7 +53,7 @@ export default function App() {
       <Route path="/order/form" element={<OrderFormPage />} />
       <Route path="/order/checkout" element={<CheckoutPage />} />
       <Route path="/order/complete" element={<OrderCompletePage />} />
-      {/* 없는 경로는 로그인 화면으로 — "/" 도 여기로 들어온다 */}
+      {/* 없는 경로는 첫 화면과 같은 로그인 화면으로 */}
       <Route path="*" element={<AuthPage />} />
     </Routes>
   )

@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import SocialAuth from './SocialAuth'
 
 const COPY = {
@@ -34,6 +34,7 @@ function Field({ label, ...input }) {
 }
 
 export default function AuthForm({ mode, onModeChange }) {
+  const navigate = useNavigate()
   const isSignup = mode === 'signup'
   const [heading, description, submitLabel] = COPY[mode]
 
@@ -48,7 +49,8 @@ export default function AuthForm({ mode, onModeChange }) {
     // 여기 검증(minLength 8·비밀번호 일치·약관 required)은 전부 UX 편의용이다.
     // 신뢰 경계는 서버다 — 서버에서 같은 규칙을 다시 검증하고,
     // 약관 동의는 (동의 여부·동의 시각·약관 버전)을 레코드로 남겨야 한다.
-    // TODO: 인증 API 연동
+    // TODO: 인증 API 연동 — 지금은 입력이 유효하면 바로 컬렉션으로 보낸다
+    navigate('/collection')
   }
 
   // 두 비밀번호 중 어느 쪽을 고쳐도 불일치 표시가 풀리게 폼 레벨에서 해제한다
