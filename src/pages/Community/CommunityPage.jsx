@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import Header from '../../components/Header'
-import Panel from '../../components/Panel'
 import SectionHeading from './components/SectionHeading'
 import OwnerHeading from './components/OwnerHeading'
 import EditionCard from './components/EditionCard'
@@ -82,14 +81,14 @@ export default function CommunityPage() {
       title: '인기 에디션',
       items: [...editions]
         .sort((a, b) => b.likeCount - a.likeCount)
-        .slice(0, 3)
+        .slice(0, 4)
         .map(toCard),
     },
     {
       id: 'latest',
       eyebrow: 'LATEST',
       title: '최신 에디션',
-      items: editions.slice(0, 3).map(toCard),
+      items: editions.slice(0, 4).map(toCard),
     },
   ].filter((section) => section.items.length > 0)
 
@@ -102,14 +101,16 @@ export default function CommunityPage() {
       <main className="min-h-[100dvh] w-full">
         {/* 캔버스 1280 안에서 좌우 48 을 뺀 1184 가 콘텐츠 폭이다 */}
         <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[40px] pb-[48px] max-[860px]:px-[22px] max-[860px]:pt-[28px]">
-          <Panel className="flex flex-col gap-[16px]">
+          {/* 크림 패널 없이 우드 배경 위에 바로 올린다 — 우드(#a87f64)는 중간톤이라
+              그 위 텍스트는 ink 계열이 아니면 4.5:1 을 못 넘는다 */}
+          <div className="flex flex-col gap-[16px]">
             {/* 검색 상자는 제목 블록 바닥에 맞춘다 (items-end) */}
             <div className="flex items-end justify-between gap-[24px] max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[16px]">
               <div className="min-w-0">
                 <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
                   공개 컬렉션 커뮤니티
                 </h1>
-                <p className="mt-[10px] mb-0 text-[13.5px] break-keep text-ink/62">
+                <p className="mt-[10px] mb-0 text-[13.5px] break-keep text-ink">
                   다른 사용자의 에디션을 둘러보세요.
                 </p>
               </div>
@@ -148,10 +149,10 @@ export default function CommunityPage() {
               </form>
             </div>
 
-            {loading && <p className="m-0 py-[36px] text-center text-[12px] text-muted">불러오는 중입니다.</p>}
-            {error && <p className="m-0 py-[36px] text-center text-[12px] text-cognac" role="alert">{error}</p>}
+            {loading && <p className="m-0 py-[36px] text-center text-[12px] text-ink">불러오는 중입니다.</p>}
+            {error && <p className="m-0 py-[36px] text-center text-[12px] font-medium text-ink" role="alert">{error}</p>}
             {!loading && !error && sections.length === 0 && (
-              <p className="m-0 py-[36px] text-center text-[12px] text-muted">
+              <p className="m-0 py-[36px] text-center text-[12px] text-ink">
                 {keyword ? '검색 결과가 없습니다.' : '아직 공개된 에디션이 없습니다.'}
               </p>
             )}
@@ -164,9 +165,9 @@ export default function CommunityPage() {
                   <SectionHeading id={`${id}-heading`} eyebrow={eyebrow} title={title} />
                 )}
                 {items.length === 0 ? (
-                  <p className="m-0 py-[20px] text-[12px] text-muted">공개된 카드가 없습니다.</p>
+                  <p className="m-0 py-[20px] text-[12px] text-ink">공개된 카드가 없습니다.</p>
                 ) : (
-                  <ul className="mt-[16px] grid list-none grid-cols-3 gap-[20px] p-0 max-[1000px]:grid-cols-2 max-[640px]:grid-cols-1">
+                  <ul className="mt-[16px] grid list-none grid-cols-4 gap-x-[32px] gap-y-[30px] p-0 max-[1100px]:grid-cols-3 max-[860px]:grid-cols-2 max-[560px]:grid-cols-1">
                     {items.map((item) => (
                       <li key={item.id}>
                         <EditionCard {...item} />
@@ -176,7 +177,7 @@ export default function CommunityPage() {
                 )}
               </section>
             ))}
-          </Panel>
+          </div>
         </div>
       </main>
     </>
