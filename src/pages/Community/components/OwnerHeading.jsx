@@ -22,18 +22,18 @@ export default function OwnerHeading({ id, nickname, profileImageUrl, href }) {
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="m-0 text-[9px] tracking-[.2em] text-clay">COLLECTION</p>
+        <p className="m-0 text-[9px] tracking-[.2em] text-ink">COLLECTION</p>
 
         <div className="mt-[3px] flex items-center gap-[11px]">
           <h2 id={id} className="m-0 truncate text-[18px] font-semibold tracking-[-.02em]">
             {nickname}의 컬렉션
           </h2>
-          <span className="h-px flex-1 bg-[#e7decf]" aria-hidden="true" />
+          <span className="h-px flex-1 bg-ink/20" aria-hidden="true" />
         </div>
       </div>
 
       <Link
-        className="shrink-0 text-[12px] text-[#5b4130] no-underline transition-colors duration-700 ease-film hover:text-ink"
+        className="shrink-0 text-[12px] text-ink no-underline transition-colors duration-700 ease-film hover:text-ink-hover"
         to={href}
       >
         진열장 전체 보기 →

@@ -3,11 +3,12 @@
 export default function SectionHeading({ id, eyebrow, title }) {
   return (
     <div className="flex items-center gap-[11px]">
-      <p className="m-0 text-[9px] tracking-[.2em] text-clay">{eyebrow}</p>
+      {/* 우드 배경 위라 clay 는 1.1:1 밖에 안 나온다 — 라벨·룰 모두 ink 계열로 */}
+      <p className="m-0 text-[9px] tracking-[.2em] text-ink">{eyebrow}</p>
       <h2 id={id} className="m-0 text-[18px] font-semibold tracking-[-.02em]">
         {title}
       </h2>
-      <span className="h-px flex-1 bg-[#e7decf]" aria-hidden="true" />
+      <span className="h-px flex-1 bg-ink/20" aria-hidden="true" />
     </div>
   )
 }
