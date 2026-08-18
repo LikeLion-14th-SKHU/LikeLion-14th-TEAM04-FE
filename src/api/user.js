@@ -62,6 +62,15 @@ export const updateProfileImage = async (file) => {
     return data
 }
 
+// 닉네임 부분 일치 회원 검색 (탈퇴 회원 제외, 인증 불필요).
+// 이 응답만 봉투({success,data})가 없어 users 를 그대로 꺼낸다
+export const searchUsers = async (nickname, { page = 0, size = 20 } = {}) => {
+    const params = new URLSearchParams({ nickname, page, size })
+    const data = await api(`/search?${params}`)
+
+    return data?.users ?? []
+}
+
 // 회원 탈퇴
 export const deleteMe = () =>
     api('/me', {

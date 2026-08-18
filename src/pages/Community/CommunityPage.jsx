@@ -4,6 +4,7 @@ import SectionHeading from './components/SectionHeading'
 import OwnerHeading from './components/OwnerHeading'
 import EditionCard from './components/EditionCard'
 import { getCommunityEditions, getPublicCollections } from '../../api/community'
+import { searchUsers } from '../../api/user'
 import { demoSearch } from '../../data/demoCommunity'
 
 const toCard = (edition) => ({
@@ -31,16 +32,29 @@ export default function CommunityPage() {
     Promise.all([
       getCommunityEditions({ keyword }),
       keyword ? getPublicCollections({ nickname: keyword }) : null,
+      keyword ? searchUsers(keyword) : [],
     ])
-      .then(([page, collections]) => {
+      .then(([page, collections, users]) => {
         if (cancelled) return
+
+        // 회원 검색은 옷장을 공개하지 않은 사람도 찾아준다. shareToken 은 공개한 사람에게만 붙고,
+        // 회원 검색에 안 잡힌 공개 옷장 주인도 놓치지 않게 뒤에 이어 붙인다
+        const owners = collections?.content ?? []
+        const found = [
+          ...users.map((user) => ({
+            ...user,
+            shareToken: owners.find((owner) => owner.userId === user.userId)?.shareToken,
+          })),
+          ...owners.filter((owner) => !users.some((user) => user.userId === owner.userId)),
+        ]
+
         // 백엔드에 공개 카드가 하나도 없으면 가상 데이터로 채운다
         const demo =
-          !page.content?.length && !collections?.content?.length
+          !page.content?.length && !found.length
             ? demoSearch(keyword)
             : { editions: [], people: [] }
         setEditions(page.content?.length ? page.content : demo.editions)
-        setPeople(collections?.content?.length ? collections.content : demo.people)
+        setPeople(found.length ? found : demo.people)
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -59,7 +73,8 @@ export default function CommunityPage() {
     ...people.map(({ userId, nickname, profileImageUrl, shareToken }) => ({
       id: `owner-${userId}`,
       owner: { nickname, profileImageUrl },
-      href: `/community/collection/${shareToken}`,
+      // 옷장을 공개하지 않은 회원은 열어볼 진열장이 없어 링크를 안 붙인다
+      href: shareToken && `/community/collection/${shareToken}`,
       items: editions.filter((edition) => edition.ownerNickname === nickname).map(toCard),
     })),
     {
