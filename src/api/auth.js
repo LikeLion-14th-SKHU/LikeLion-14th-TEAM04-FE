@@ -9,11 +9,11 @@ export const socialLogin = (provider, params) =>
   api(`/auth/${provider}/callback?${new URLSearchParams(params)}`)
 
 const OAUTH = {
-  kakao: ['https://kauth.kakao.com/oauth/authorize', import.meta.env.VITE_KAKAO_CLIENT_ID, '카카오'],
-  naver: ['https://nid.naver.com/oauth2.0/authorize', import.meta.env.VITE_NAVER_CLIENT_ID, '네이버'],
+  kakao: ['https://kauth.kakao.com/oauth/authorize', import.meta.env.KAKAO_CLIENT_ID, '카카오'],
+  naver: ['https://nid.naver.com/oauth2.0/authorize', import.meta.env.NAVER_CLIENT_ID, '네이버'],
   google: [
     'https://accounts.google.com/o/oauth2/v2/auth',
-    import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    import.meta.env.GOOGLE_CLIENT_ID,
     '구글',
   ],
 }
