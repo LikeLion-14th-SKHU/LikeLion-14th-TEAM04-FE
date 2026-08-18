@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import SocialAuth from './SocialAuth'
 import { login, signup } from '../../../api/auth'
 import { saveTokens } from '../../../api/client'
 
@@ -47,7 +46,7 @@ export default function AuthForm({ mode, onModeChange }) {
   const [heading, description, submitLabel] = COPY[mode]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  // 로그인·회원가입·소셜이 전부 이 값 하나로 저장 위치를 정한다
+  // 로그인·회원가입이 전부 이 값 하나로 저장 위치를 정한다
   const [remember, setRemember] = useState(false)
 
   const handleSubmit = async (event) => {
@@ -247,8 +246,6 @@ export default function AuthForm({ mode, onModeChange }) {
           <span>{submitting ? '보내는 중' : submitLabel}</span>
         </button>
       </form>
-
-      <SocialAuth remember={remember} />
 
       <p className="mt-auto mb-0 pt-[38px] text-[9px] tracking-[.1em] text-[#9a9086] uppercase">
         Memory Atelier · Seoul · Est. 2026

@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 import AuthPage from './pages/Auth/AuthPage'
-import AuthCallbackPage from './pages/Auth/AuthCallbackPage'
 import CommunityPage from './pages/Community/CommunityPage'
 import CommunityEditionPage from './pages/Community/CommunityEditionPage'
 import CollectionThemePage from './pages/CollectionTheme/CollectionThemePage'
@@ -34,8 +33,6 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AuthPage />} />
-      {/* 소셜 인가 화면이 돌려보내는 곳 — 여기서 code 를 토큰으로 바꾼다 */}
-      <Route path="/auth/:provider/callback" element={<AuthCallbackPage />} />
 
       <Route path="/collection" element={<CollectionPage />} />
       <Route path="/users/:userId/collection" element={<CollectionPage />} />
