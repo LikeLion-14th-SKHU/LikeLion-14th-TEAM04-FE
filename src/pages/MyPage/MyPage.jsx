@@ -10,6 +10,7 @@ import {
   updateMe,
   updateProfileImage,
   deleteMe,
+  clearMe,
 } from '../../api/user'
 
 const NOTIFICATIONS = [
@@ -112,6 +113,7 @@ export default function MyPage() {
   const handleLogout = () => {
     localStorage.clear()
     sessionStorage.clear()
+    clearMe()
     navigate('/')
   }
 
@@ -232,6 +234,7 @@ export default function MyPage() {
 
       localStorage.clear()
       sessionStorage.clear()
+      clearMe()
 
       setWithdrawOpen(false)
       navigate('/')

@@ -1,11 +1,24 @@
+import { useEffect } from 'react'
 import { Link, NavLink } from 'react-router'
+import { getTokens } from '../api/client'
+import { getMe, useMe } from '../api/user'
 
 const NAV = [
-  ['/collection', '홈'],
+  ['/collection', '컬렉션'],
   ['/community', '커뮤니티'],
 ]
 
 export default function Header() {
+  const me = useMe()
+
+  // 마이페이지를 거치지 않고 바로 들어온 경우를 위해 한 번만 채운다.
+  // 이미 받아둔 값이 있으면(마이페이지에서 프로필을 바꾼 직후 포함) 그대로 쓴다
+  useEffect(() => {
+    if (!me && getTokens()) {
+      getMe().catch(() => {})
+    }
+  }, [me])
+
   return (
     <header className="flex h-[56px] items-center justify-between border-b border-line bg-white px-[clamp(24px,3vw,56px)] max-[860px]:h-[50px] max-[860px]:px-[22px]">
       <Link
@@ -49,10 +62,15 @@ export default function Header() {
           </NavLink>
         ))}
         <Link
-          className="block size-[32px] rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[26px]"
+          className="block size-[32px] overflow-hidden rounded-full bg-[#d4d0cb] transition-colors duration-700 ease-film hover:bg-[#c2bdb7] max-[430px]:size-[26px]"
           to="/mypage"
           aria-label="내 계정"
-        />
+        >
+          {/* 프로필을 안 올린 사람은 그대로 회색 원 */}
+          {me?.profileImageUrl && (
+            <img className="size-full object-cover" src={me.profileImageUrl} alt="" />
+          )}
+        </Link>
       </nav>
     </header>
   )
