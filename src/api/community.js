@@ -6,8 +6,8 @@ export function getCommunityEditions({ keyword = '', page = 0, size = 100 } = {}
   return api(`/community/editions?${params}`)
 }
 
-// 옷장 전체를 공개한 사람 목록. 회원 API 의 /search 는 봉투({success,data})도 안 씌우고
-// 공개 여부도 안 보므로 커뮤니티 검색에는 이걸 쓴다
+// 옷장 전체를 공개한 사람 목록. 여기에만 shareToken 이 있어 진열장 링크를 만들 수 있다.
+// 옷장을 공개하지 않은 회원까지 찾으려면 회원 API 의 searchUsers 와 함께 쓴다
 export function getPublicCollections({ nickname = '', page = 0, size = 20 } = {}) {
   const params = new URLSearchParams({ page, size })
   if (nickname) params.set('nickname', nickname)

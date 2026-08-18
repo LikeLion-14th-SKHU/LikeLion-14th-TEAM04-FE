@@ -32,12 +32,15 @@ export default function OwnerHeading({ id, nickname, profileImageUrl, href }) {
         </div>
       </div>
 
-      <Link
-        className="shrink-0 text-[12px] text-ink no-underline transition-colors duration-700 ease-film hover:text-ink-hover"
-        to={href}
-      >
-        진열장 전체 보기 →
-      </Link>
+      {/* 옷장을 공개하지 않은 회원은 링크할 진열장이 없다 */}
+      {href && (
+        <Link
+          className="shrink-0 text-[12px] text-ink no-underline transition-colors duration-700 ease-film hover:text-ink-hover"
+          to={href}
+        >
+          진열장 전체 보기 →
+        </Link>
+      )}
     </div>
   )
 }
