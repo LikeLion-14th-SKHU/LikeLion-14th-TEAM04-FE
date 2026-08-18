@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
-import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 import InputModal from '../../components/InputModal'
 import CreditTopUpModal from './components/CreditTopUpModal'
@@ -25,7 +24,8 @@ const ORDERS = [
     id: 'MA-20260804-0012',
     product: '아카이브 파우치',
     status: '제작 상담 중',
-    statusClass: 'bg-[#f4ede2] text-[#6b4e38]',
+    // 아이보리 박스 위라 #f4ede2 는 배경에 묻힌다 — 한 단계 진한 톤으로
+    statusClass: 'bg-[#e9dcc8] text-[#6b4e38]',
   },
   {
     id: 'MA-20260718-0007',
@@ -282,18 +282,20 @@ export default function MyPage() {
 
       <main className="min-h-[100dvh] w-full">
         <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[40px] pb-[48px] max-[860px]:px-[22px] max-[860px]:pt-[28px]">
-          <Panel>
+          {/* 크림 패널 없이 우드 배경 위에 바로 올린다 — 우드(#a87f64)는 중간톤이라
+              그 위 텍스트는 ink 계열이 아니면 4.5:1 을 못 넘는다 */}
+          <>
             <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
               마이페이지
             </h1>
 
-            <p className="mt-[10px] mb-[24px] text-[13.5px] break-keep text-ink/62">
+            <p className="mt-[10px] mb-[24px] text-[13.5px] break-keep text-ink">
               프로필, 계정 설정과 주문 내역을 관리하세요.
             </p>
 
             {/* 로딩 */}
             {loading && (
-              <p className="m-0 py-[56px] text-center text-[12px] text-muted">
+              <p className="m-0 py-[56px] text-center text-[12px] text-ink">
                 회원 정보를 불러오는 중입니다.
               </p>
             )}
@@ -301,10 +303,10 @@ export default function MyPage() {
             {/* 비로그인 */}
             {!loading && unauthorized && (
               <section
-                className="flex min-h-[300px] flex-col items-center justify-center border border-frame bg-white px-[24px] py-[56px] text-center"
+                className="flex min-h-[300px] flex-col items-center justify-center bg-[#f6f0e6] px-[24px] py-[56px] text-center"
                 aria-labelledby="login-required-heading"
               >
-                <div className="flex size-[54px] items-center justify-center rounded-full bg-[#f4ede2]">
+                <div className="flex size-[54px] items-center justify-center rounded-full bg-paper-deep">
                   <svg
                     className="size-[22px] text-ink/60"
                     viewBox="0 0 24 24"
@@ -345,10 +347,11 @@ export default function MyPage() {
             {/* 일반 서버 오류 */}
             {!loading && !unauthorized && error && (
               <div
-                className="flex min-h-[220px] flex-col items-center justify-center border border-frame bg-white px-[24px] text-center"
+                className="flex min-h-[220px] flex-col items-center justify-center bg-[#f6f0e6] px-[24px] text-center"
                 role="alert"
               >
-                <p className="m-0 text-[13px] text-cognac">
+                {/* cognac 은 아이보리 위에서 4.19:1 로 떨어진다 — 한 톤 어둡게 */}
+                <p className="m-0 text-[13px] text-[#7d4526]">
                   {error}
                 </p>
 
@@ -367,7 +370,7 @@ export default function MyPage() {
               <>
                 {/* 프로필 */}
                 <section
-                  className="flex h-[100px] items-center border border-frame bg-white px-[24px] max-[860px]:h-auto max-[860px]:flex-col max-[860px]:items-start max-[860px]:gap-[18px] max-[860px]:py-[20px]"
+                  className="flex h-[100px] items-center bg-[#f6f0e6] px-[24px] max-[860px]:h-auto max-[860px]:flex-col max-[860px]:items-start max-[860px]:gap-[18px] max-[860px]:py-[20px]"
                   aria-label="프로필"
                 >
                   {user.profileImageUrl ? (
@@ -436,10 +439,11 @@ export default function MyPage() {
                   </div>
                 </section>
 
-                <div className="mt-[20px] grid grid-cols-[minmax(0,1fr)_320px] items-start gap-[20px] max-[960px]:grid-cols-1">
+                {/* items-start 를 빼서 두 박스가 같은 높이로 늘어난다 — 아래 끝이 맞는다 */}
+                <div className="mt-[20px] grid grid-cols-[minmax(0,1fr)_320px] gap-[20px] max-[960px]:grid-cols-1">
                   {/* 계정 설정 */}
                   <section
-                    className="border border-frame bg-white p-[22px]"
+                    className="bg-[#f6f0e6] p-[22px]"
                     aria-labelledby="account-heading"
                   >
                     <h2
@@ -454,7 +458,7 @@ export default function MyPage() {
                         ({ label, value, action, onClick }) => (
                           <li
                             key={label}
-                            className="flex h-[44px] items-center gap-[12px] border-b border-[#f2ebe0]"
+                            className="flex h-[44px] items-center gap-[12px] border-b border-line"
                           >
                             <span className="w-[110px] shrink-0 text-[12.5px] text-ink/55">
                               {label}
@@ -492,7 +496,7 @@ export default function MyPage() {
 
                   {/* 알림 설정 - UI 전용 */}
                   <section
-                    className="border border-frame bg-white p-[22px]"
+                    className="bg-[#f6f0e6] p-[22px]"
                     aria-labelledby="notify-heading"
                   >
                     <h2
@@ -537,7 +541,7 @@ export default function MyPage() {
 
                 {/* 최근 주문 - UI 전용 */}
                 <section
-                  className="mt-[20px] border border-frame bg-white p-[22px]"
+                  className="mt-[20px] bg-[#f6f0e6] p-[22px]"
                   aria-labelledby="orders-heading"
                 >
                   <div className="flex items-center justify-between gap-[16px]">
@@ -561,7 +565,7 @@ export default function MyPage() {
                       ({ id, product, status, statusClass }) => (
                         <li
                           key={id}
-                          className="flex h-[44px] items-center gap-[12px] border-b border-[#f2ebe0] max-[860px]:h-auto max-[860px]:flex-wrap max-[860px]:py-[12px]"
+                          className="flex h-[44px] items-center gap-[12px] border-b border-line max-[860px]:h-auto max-[860px]:flex-wrap max-[860px]:py-[12px]"
                         >
                           <span className="w-[220px] shrink-0 text-[11.5px] max-[860px]:w-full">
                             {id}
@@ -591,7 +595,7 @@ export default function MyPage() {
                 </section>
               </>
             )}
-          </Panel>
+          </>
         </div>
       </main>
 
