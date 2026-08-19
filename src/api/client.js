@@ -6,7 +6,26 @@ export const BASE_URL =
 // 토큰은 키 하나에 JSON 으로 넣는다. 로그인 유지면 localStorage, 아니면 sessionStorage
 const KEY = 'memory-atelier-auth'
 
+// 에디션을 만들다 만 흔적(사진 dataURL·사연·회차 id)은 계정에 묶인 데이터다 —
+// 계정이 바뀌거나 세션이 끊기면 다음 사람 화면에 남으면 안 된다
+const EDITION_DRAFT_KEYS = [
+  'edition-form',
+  'edition-request',
+  'edition-memory-id',
+  'edition-generation-id',
+  'edition-concept',
+]
+
+export const clearEditionDraft = () => {
+  EDITION_DRAFT_KEYS.forEach((key) => sessionStorage.removeItem(key))
+
+  // 완료 화면이 사진 dataURL 째로 디스크에 남기는 사본. 로그아웃 말고는 지우는 데가 없었다
+  localStorage.removeItem('my-editions')
+}
+
 export function saveTokens(tokens, remember) {
+  clearEditionDraft()
+
   const [store, other] = remember
     ? [localStorage, sessionStorage]
     : [sessionStorage, localStorage]
@@ -26,6 +45,7 @@ export function getTokens() {
 }
 
 export function clearTokens() {
+  clearEditionDraft()
   localStorage.removeItem(KEY)
   sessionStorage.removeItem(KEY)
 }
