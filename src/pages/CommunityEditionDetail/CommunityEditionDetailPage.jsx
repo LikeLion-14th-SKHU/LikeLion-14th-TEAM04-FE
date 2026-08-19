@@ -349,36 +349,38 @@ export default function CommunityEditionDetailPage() {
                                     </span>
                                 </div>
 
-                                {/* =====================
-                                    사용자 프로필
-                                ====================== */}
-                                <div className="mt-[18px] flex items-center gap-[14px] bg-[#f6f0e6] px-[20px] py-[18px]">
+                                {/* 사용자 프로필 */}
+                                <div className="mt-[18px] flex items-center justify-between gap-[16px] bg-[#f6f0e6] px-[20px] py-[18px]">
+                                    <div className="flex min-w-0 items-center gap-[14px]">
+                                        {edition.ownerProfileImageUrl ? (
+                                            <img
+                                                src={edition.ownerProfileImageUrl}
+                                                alt={`${ownerNickname} 프로필`}
+                                                className="size-[44px] shrink-0 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex size-[44px] shrink-0 items-center justify-center rounded-full bg-[#d6cec4] text-[13px] font-semibold text-ink/55">
+                                                {ownerNickname
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </div>
+                                        )}
 
-                                    {edition.ownerProfileImageUrl ? (
-                                        <img
-                                            src={
-                                                edition.ownerProfileImageUrl
-                                            }
-                                            alt={`${ownerNickname} 프로필`}
-                                            className="size-[44px] shrink-0 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex size-[44px] shrink-0 items-center justify-center rounded-full bg-[#d6cec4] text-[13px] font-semibold text-ink/55">
-                                            {ownerNickname
-                                                .charAt(0)
-                                                .toUpperCase()}
-                                        </div>
-                                    )}
-
-                                    <div className="min-w-0">
                                         <p className="m-0 truncate text-[12px] font-medium">
                                             {ownerNickname}
                                         </p>
-
-                                        <p className="mt-[4px] mb-0 text-[9px] text-ink/45">
-                                            Memory Atelier
-                                        </p>
                                     </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        className="h-[28px] shrink-0 px-[9px] text-[8px]"
+                                        onClick={() => {
+                                            // TODO: 다른 사용자 컬렉션 페이지 연결
+                                        }}
+                                    >
+                                        컬렉션 보러가기
+                                    </Button>
                                 </div>
                             </div>
 
