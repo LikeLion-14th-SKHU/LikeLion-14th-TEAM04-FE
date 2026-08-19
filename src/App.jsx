@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 import AuthPage from './pages/Auth/AuthPage'
 import CommunityPage from './pages/Community/CommunityPage'
-import CommunityEditionPage from './pages/Community/CommunityEditionPage'
 import CollectionThemePage from './pages/CollectionTheme/CollectionThemePage'
 import MyPage from './pages/MyPage/MyPage'
 import OrderPage from './pages/Order/OrderPage'
@@ -47,10 +46,8 @@ export default function App() {
       <Route path="/edition/:conceptId" element={<MyEditionDetailPage />} />
       <Route path="/edition/:conceptId/certificate" element={<CertificatePage />} />
 
-      <Route path="/users/:userId/edition/:editionId" element={<CommunityEditionDetailPage />} />
-
       <Route path="/community" element={<CommunityPage />} />
-      <Route path="/community/edition/:conceptId" element={<CommunityEditionPage />} />
+      <Route path="/community/edition/:conceptId" element={<CommunityEditionDetailPage />} />
       {/* 남의 진열장 — 컬렉션 전체를 공개한 사람만 shareToken 이 나온다 */}
       <Route path="/community/collection/:shareToken" element={<CollectionPage />} />
 
