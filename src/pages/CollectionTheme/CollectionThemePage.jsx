@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import Header from '../../components/Header'
@@ -10,34 +10,200 @@ import ColorSwatchOption from './components/ColorSwatchOption'
 import {
   COLORS,
   colorOf,
-  loadTheme,
-  saveTheme,
+  DEFAULT_THEME,
 } from '../../data/collectionTheme'
+
+import {
+  updateCollectionTheme,
+  updateCollectionName,
+} from '../../api/collection'
+
+import {
+  getMe,
+} from '../../api/user'
+
+// 프론트 색상 value → 백엔드 enum
+const THEME_API_VALUES = {
+  white: 'WHITE',
+  ivory: 'IVORY',
+  butter: 'BUTTER',
+  olive: 'OLIVE_CREAM',
+  rose: 'DUSTY_ROSE',
+  mocha: 'LIGHT_MOCHA',
+}
+
+// 백엔드 enum → 프론트 색상 value
+const API_THEME_VALUES = {
+  WHITE: 'white',
+  IVORY: 'ivory',
+  BUTTER: 'butter',
+  OLIVE_CREAM: 'olive',
+  DUSTY_ROSE: 'rose',
+  LIGHT_MOCHA: 'mocha',
+}
 
 export default function CollectionThemePage() {
   const navigate = useNavigate()
 
-  // draft는 화면에 비치는 값,
-  // saved는 마지막으로 확정된 값
-  const [saved, setSaved] = useState(loadTheme)
-  const [draft, setDraft] = useState(saved)
+  const [saved, setSaved] = useState({
+    title: DEFAULT_THEME.title,
+    color: DEFAULT_THEME.color,
+  })
 
-  // 현재 선택된 색상 정보
+  const [draft, setDraft] = useState({
+    title: DEFAULT_THEME.title,
+    color: DEFAULT_THEME.color,
+  })
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  // =========================
+  // 서버에서 현재 컬렉션 설정 조회
+  // =========================
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchCollectionSetting = async () => {
+      try {
+        setLoading(true)
+        setSaveError('')
+
+        const data = await getMe()
+
+        if (cancelled) return
+
+        const nextTheme = {
+          title:
+            data?.collectionName ||
+            DEFAULT_THEME.title,
+
+          color:
+            API_THEME_VALUES[
+            data?.collectionTheme
+            ] ||
+            DEFAULT_THEME.color,
+        }
+
+        setSaved(nextTheme)
+        setDraft(nextTheme)
+      } catch (error) {
+        if (cancelled) return
+
+        console.error(
+          '컬렉션 설정 조회 실패:',
+          error,
+        )
+
+        setSaveError(
+          error.message ??
+          '컬렉션 설정을 불러오지 못했습니다.',
+        )
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchCollectionSetting()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // 현재 선택된 색상
   const color = colorOf(draft.color)
 
+  // =========================
   // 저장
-  // localStorage에 저장한 뒤 컬렉션 화면으로 이동
-  const handleSave = () => {
-    saveTheme(draft)
-    setSaved(draft)
+  // =========================
 
-    navigate('/collection')
+  const handleSave = async () => {
+    const collectionName =
+      draft.title.trim()
+
+    if (!collectionName) {
+      setSaveError(
+        '컬렉션 이름을 입력해주세요.',
+      )
+      return
+    }
+
+    const themeValue =
+      THEME_API_VALUES[draft.color]
+
+    if (!themeValue) {
+      console.error(
+        '지원하지 않는 테마:',
+        draft.color,
+      )
+
+      setSaveError(
+        '지원하지 않는 컬렉션 테마입니다.',
+      )
+
+      return
+    }
+
+    try {
+      setSaving(true)
+      setSaveError('')
+
+      await Promise.all([
+        updateCollectionName(
+          collectionName,
+        ),
+        updateCollectionTheme(
+          themeValue,
+        ),
+      ])
+
+      // PATCH 후 /me를 다시 조회해서
+      // 서버에 실제 저장된 최신 설정을 가져온다.
+      const data = await getMe()
+
+      const nextTheme = {
+        title:
+          data?.collectionName ||
+          collectionName,
+
+        color:
+          API_THEME_VALUES[
+          data?.collectionTheme
+          ] ||
+          draft.color,
+      }
+
+      setSaved(nextTheme)
+      setDraft(nextTheme)
+
+      navigate('/collection')
+    } catch (error) {
+      console.error(
+        '컬렉션 설정 변경 실패:',
+        error,
+      )
+
+      setSaveError(
+        error.message ??
+        '컬렉션 설정을 변경하지 못했습니다.',
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
+  // =========================
   // 취소
-  // 저장하지 않고 컬렉션 화면으로 이동
+  // =========================
+
   const handleCancel = () => {
     setDraft(saved)
+    setSaveError('')
 
     navigate('/collection')
   }
@@ -54,11 +220,21 @@ export default function CollectionThemePage() {
             </h1>
 
             <p className="mt-[10px] mb-[24px] text-[13.5px] break-keep text-ink/62">
-              컬렉션에 사용할 대표 색상과 이름을 정하고 미리보기를 확인하세요.
+              컬렉션에 사용할 대표 색상과 이름을 정하고
+              미리보기를 확인하세요.
             </p>
 
+            {loading && (
+              <p className="mb-[20px] text-[12px] text-ink/45">
+                컬렉션 설정을 불러오는 중입니다.
+              </p>
+            )}
+
             <div className="border border-frame bg-white p-[22px]">
-              <fieldset className="m-0 min-w-0 border-0 p-0">
+              <fieldset
+                className="m-0 min-w-0 border-0 p-0"
+                disabled={loading || saving}
+              >
                 <legend className="mb-[14px] p-0 text-[13.5px] font-medium">
                   대표 색상
                 </legend>
@@ -69,14 +245,19 @@ export default function CollectionThemePage() {
                       key={item.value}
                       name="collection-color"
                       checked={
-                        item.value === draft.color
+                        item.value ===
+                        draft.color
                       }
-                      onChange={(value) =>
+                      onChange={(value) => {
                         setDraft({
                           ...draft,
                           color: value,
                         })
-                      }
+
+                        if (saveError) {
+                          setSaveError('')
+                        }
+                      }}
                       {...item}
                     />
                   ))}
@@ -91,16 +272,24 @@ export default function CollectionThemePage() {
               </label>
 
               <input
-                className="mt-[10px] h-[42px] w-full max-w-[420px] border border-[#dcd3c5] bg-white px-[13px] text-[13px] text-ink outline-0 focus:border-clay"
+                className="mt-[10px] h-[42px] w-full max-w-[420px] border border-[#dcd3c5] bg-white px-[13px] text-[13px] text-ink outline-0 focus:border-clay disabled:cursor-not-allowed disabled:opacity-50"
                 id="collection-title"
                 value={draft.title}
                 maxLength={20}
-                onChange={(event) =>
+                disabled={
+                  loading || saving
+                }
+                onChange={(event) => {
                   setDraft({
                     ...draft,
-                    title: event.target.value,
+                    title:
+                      event.target.value,
                   })
-                }
+
+                  if (saveError) {
+                    setSaveError('')
+                  }
+                }}
               />
             </div>
 
@@ -116,7 +305,8 @@ export default function CollectionThemePage() {
                 aria-label="컬렉션 옷장 미리보기"
               >
                 <p className="m-0 mb-[12px] truncate text-[18px] font-semibold">
-                  {draft.title || '나의 컬렉션'}
+                  {draft.title ||
+                    '나의 컬렉션'}
                 </p>
 
                 <div
@@ -143,7 +333,8 @@ export default function CollectionThemePage() {
                       <p
                         className="m-0 mb-[8px] text-[7px] tracking-[.16em]"
                         style={{
-                          color: color.accent,
+                          color:
+                            color.accent,
                         }}
                       >
                         ACCESSORY
@@ -152,42 +343,53 @@ export default function CollectionThemePage() {
                       <div className="grid grid-cols-2 gap-[5px]">
                         {Array.from({
                           length: 6,
-                        }).map((_, index) => (
-                          <div
-                            key={index}
-                            className="aspect-square border"
-                            style={{
-                              backgroundColor:
-                                color.slot,
-                              borderColor:
-                                color.border,
-                            }}
-                          />
-                        ))}
+                        }).map(
+                          (
+                            _,
+                            index,
+                          ) => (
+                            <div
+                              key={
+                                index
+                              }
+                              className="aspect-square border"
+                              style={{
+                                backgroundColor:
+                                  color.slot,
+                                borderColor:
+                                  color.border,
+                              }}
+                            />
+                          ),
+                        )}
                       </div>
 
                       <div className="flex-1" />
 
-                      {[1, 2].map((drawer) => (
-                        <div
-                          key={drawer}
-                          className="relative mt-[5px] h-[34px] border"
-                          style={{
-                            backgroundColor:
-                              color.drawer,
-                            borderColor:
-                              color.border,
-                          }}
-                        >
-                          <span
-                            className="absolute top-1/2 left-1/2 h-[2px] w-[20px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                      {[1, 2].map(
+                        (drawer) => (
+                          <div
+                            key={
+                              drawer
+                            }
+                            className="relative mt-[5px] h-[34px] border"
                             style={{
                               backgroundColor:
-                                color.accent,
+                                color.drawer,
+                              borderColor:
+                                color.border,
                             }}
-                          />
-                        </div>
-                      ))}
+                          >
+                            <span
+                              className="absolute top-1/2 left-1/2 h-[2px] w-[20px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  color.accent,
+                              }}
+                            />
+                          </div>
+                        ),
+                      )}
                     </div>
 
                     {/* BAG + CLOTHING */}
@@ -206,7 +408,8 @@ export default function CollectionThemePage() {
                         <p
                           className="m-0 mb-[8px] text-[7px] tracking-[.16em]"
                           style={{
-                            color: color.accent,
+                            color:
+                              color.accent,
                           }}
                         >
                           BAG
@@ -215,18 +418,25 @@ export default function CollectionThemePage() {
                         <div className="grid grid-cols-4 gap-[5px]">
                           {Array.from({
                             length: 4,
-                          }).map((_, index) => (
-                            <div
-                              key={index}
-                              className="h-[68px] border"
-                              style={{
-                                backgroundColor:
-                                  color.slot,
-                                borderColor:
-                                  color.border,
-                              }}
-                            />
-                          ))}
+                          }).map(
+                            (
+                              _,
+                              index,
+                            ) => (
+                              <div
+                                key={
+                                  index
+                                }
+                                className="h-[68px] border"
+                                style={{
+                                  backgroundColor:
+                                    color.slot,
+                                  borderColor:
+                                    color.border,
+                                }}
+                              />
+                            ),
+                          )}
                         </div>
                       </div>
 
@@ -243,7 +453,8 @@ export default function CollectionThemePage() {
                         <p
                           className="m-0 mb-[8px] text-[7px] tracking-[.16em]"
                           style={{
-                            color: color.accent,
+                            color:
+                              color.accent,
                           }}
                         >
                           CLOTHING
@@ -260,28 +471,35 @@ export default function CollectionThemePage() {
                         <div className="grid grid-cols-5 gap-[5px]">
                           {Array.from({
                             length: 5,
-                          }).map((_, index) => (
-                            <div
-                              key={index}
-                              className="relative h-[165px]"
-                            >
-                              <span
-                                className="absolute top-[-8px] left-1/2 h-[8px] w-px -translate-x-1/2"
-                                style={{
-                                  backgroundColor:
-                                    color.accent,
-                                }}
-                              />
-
+                          }).map(
+                            (
+                              _,
+                              index,
+                            ) => (
                               <div
-                                className="h-full w-full"
-                                style={{
-                                  backgroundColor:
-                                    color.slot,
-                                }}
-                              />
-                            </div>
-                          ))}
+                                key={
+                                  index
+                                }
+                                className="relative h-[165px]"
+                              >
+                                <span
+                                  className="absolute top-[-8px] left-1/2 h-[8px] w-px -translate-x-1/2"
+                                  style={{
+                                    backgroundColor:
+                                      color.accent,
+                                  }}
+                                />
+
+                                <div
+                                  className="h-full w-full"
+                                  style={{
+                                    backgroundColor:
+                                      color.slot,
+                                  }}
+                                />
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                     </div>
@@ -360,14 +578,38 @@ export default function CollectionThemePage() {
                   </span>
                 </div>
 
+                {saveError && (
+                  <p
+                    className="mt-[18px] mb-0 text-[11.5px] leading-[1.6] text-cognac"
+                    role="alert"
+                  >
+                    {saveError}
+                  </p>
+                )}
+
                 <div className="mt-[20px] flex flex-col gap-[10px]">
-                  <Button onClick={handleSave}>
-                    테마 적용하기
+                  <Button
+                    onClick={
+                      handleSave
+                    }
+                    disabled={
+                      loading ||
+                      saving
+                    }
+                  >
+                    {loading
+                      ? '불러오는 중...'
+                      : saving
+                        ? '적용 중...'
+                        : '테마 적용하기'}
                   </Button>
 
                   <Button
                     variant="secondary"
-                    onClick={handleCancel}
+                    onClick={
+                      handleCancel
+                    }
+                    disabled={saving}
                   >
                     취소
                   </Button>

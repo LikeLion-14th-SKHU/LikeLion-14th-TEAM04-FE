@@ -20,3 +20,23 @@ export const getMyCollectionEdition = (conceptId) =>
     api(`/me/collection/${conceptId}`, {
         auth: true,
     })
+
+// 컬렉션 테마 변경
+export const updateCollectionTheme = (theme) =>
+    api('/me/collection/theme', {
+        method: 'PATCH',
+        auth: true,
+        body: {
+            theme,
+        },
+    })
+
+// 컬렉션 이름 변경
+export const updateCollectionName = (collectionName) =>
+    api('/me/collection/name', {
+        method: 'PATCH',
+        auth: true,
+        body: {
+            collectionName,
+        },
+    })
