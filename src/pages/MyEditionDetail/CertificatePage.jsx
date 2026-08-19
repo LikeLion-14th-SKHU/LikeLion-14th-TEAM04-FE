@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { toPng } from 'html-to-image'
 
@@ -6,65 +6,152 @@ import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 
-import { editions } from '../../data/editions'
+import { getCertificate } from '../../api/certificate'
+import { getMyCollectionEdition } from '../../api/collection'
+
+const formatDate = (value) => {
+    if (!value) return '-'
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+        return value
+    }
+
+    return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date)
+}
 
 export default function CertificatePage() {
-    const { editionId } = useParams()
+    const { conceptId } = useParams()
 
     const certificateRef = useRef(null)
 
-    const edition = editions.find(
-        (item) => item.id === Number(editionId),
-    )
+    const [certificate, setCertificate] =
+        useState(null)
 
-    if (!edition) {
-        return (
-            <>
-                <Header />
+    const [editionImage, setEditionImage] =
+        useState('')
 
-                <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
-                    {/* 글자 크기로만 잡으면 우드 한복판에 뜬 토스트처럼 보인다 */}
-                    <Panel className="w-full max-w-[520px] py-[56px] text-center">
-                        <p className="text-[13px] text-ink/50">
-                            에디션을 찾을 수 없습니다.
-                        </p>
-                    </Panel>
-                </main>
-            </>
-        )
-    }
+    const [loading, setLoading] =
+        useState(true)
 
+    const [error, setError] = useState('')
+
+    // =========================
+    // 보증서 + 에디션 이미지 조회
+    // =========================
+    useEffect(() => {
+        if (!conceptId) return
+
+        let cancelled = false
+
+        const loadCertificate = async () => {
+            setLoading(true)
+            setError('')
+
+            try {
+                const [
+                    certificateData,
+                    editionData,
+                ] = await Promise.all([
+                    getCertificate(conceptId),
+                    getMyCollectionEdition(
+                        conceptId,
+                    ),
+                ])
+
+                if (cancelled) return
+
+                setCertificate(
+                    certificateData
+                        ?.certificate ?? null,
+                )
+
+                setEditionImage(
+                    editionData?.imageUrl ?? '',
+                )
+            } catch (error) {
+                if (cancelled) return
+
+                console.error(
+                    '보증서 조회 실패:',
+                    error,
+                )
+
+                setError(
+                    error.message ??
+                    '보증서를 불러오지 못했습니다.',
+                )
+            } finally {
+                if (!cancelled) {
+                    setLoading(false)
+                }
+            }
+        }
+
+        loadCertificate()
+
+        return () => {
+            cancelled = true
+        }
+    }, [conceptId])
+
+    // =========================
+    // 이미지 로딩 대기
+    // =========================
     const waitForImages = async (node) => {
-        const images = [...node.querySelectorAll('img')]
+        const images = [
+            ...node.querySelectorAll('img'),
+        ]
 
         await Promise.all(
             images.map((img) => {
-                if (img.complete && img.naturalWidth > 0) {
+                if (
+                    img.complete &&
+                    img.naturalWidth > 0
+                ) {
                     return Promise.resolve()
                 }
 
                 return new Promise((resolve) => {
                     img.onload = resolve
-
-                    // 이미지가 깨져도 보증서 캡처 자체는 계속
                     img.onerror = resolve
                 })
             }),
         )
     }
 
-    const createCertificateImage = async () => {
-        if (!certificateRef.current) return null
+    // =========================
+    // PNG 생성
+    // =========================
+    const createCertificateImage =
+        async () => {
+            if (!certificateRef.current) {
+                return null
+            }
 
-        await waitForImages(certificateRef.current)
+            await waitForImages(
+                certificateRef.current,
+            )
 
-        return toPng(certificateRef.current, {
-            pixelRatio: 2,
-            cacheBust: false,
-            backgroundColor: '#ffffff',
-        })
-    }
+            return toPng(
+                certificateRef.current,
+                {
+                    pixelRatio: 2,
+                    cacheBust: false,
+                    backgroundColor:
+                        '#ffffff',
+                },
+            )
+        }
 
+    // =========================
+    // 저장
+    // =========================
     const handleSave = async () => {
         try {
             const dataUrl =
@@ -72,9 +159,10 @@ export default function CertificatePage() {
 
             if (!dataUrl) return
 
-            const link = document.createElement('a')
+            const link =
+                document.createElement('a')
 
-            link.download = `${edition.certificate.number}.png`
+            link.download = `${certificate.editionNumber}.png`
             link.href = dataUrl
 
             document.body.appendChild(link)
@@ -83,12 +171,15 @@ export default function CertificatePage() {
             link.remove()
         } catch (error) {
             console.error(
-                '보증서 이미지 저장에 실패했습니다.',
+                '보증서 이미지 저장 실패:',
                 error,
             )
         }
     }
 
+    // =========================
+    // 공유
+    // =========================
     const handleShare = async () => {
         try {
             const dataUrl =
@@ -96,12 +187,15 @@ export default function CertificatePage() {
 
             if (!dataUrl) return
 
-            const response = await fetch(dataUrl)
-            const blob = await response.blob()
+            const response =
+                await fetch(dataUrl)
+
+            const blob =
+                await response.blob()
 
             const file = new File(
                 [blob],
-                `${edition.certificate.number}.png`,
+                `${certificate.editionNumber}.png`,
                 {
                     type: 'image/png',
                 },
@@ -116,7 +210,7 @@ export default function CertificatePage() {
                 await navigator.share({
                     title:
                         'Memory Atelier Digital Certificate',
-                    text: `${edition.name} 디지털 보증서`,
+                    text: `${certificate.editionName} 디지털 보증서`,
                     files: [file],
                 })
 
@@ -127,7 +221,7 @@ export default function CertificatePage() {
                 await navigator.share({
                     title:
                         'Memory Atelier Digital Certificate',
-                    text: `${edition.name} 디지털 보증서`,
+                    text: `${certificate.editionName} 디지털 보증서`,
                     url: window.location.href,
                 })
 
@@ -138,13 +232,49 @@ export default function CertificatePage() {
                 window.location.href,
             )
 
-            alert('보증서 링크가 복사되었습니다.')
+            alert(
+                '보증서 링크가 복사되었습니다.',
+            )
         } catch (error) {
             console.error(
-                '보증서 공유에 실패했습니다.',
+                '보증서 공유 실패:',
                 error,
             )
         }
+    }
+
+    if (loading) {
+        return (
+            <>
+                <Header />
+
+                <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
+                    <Panel className="w-full max-w-[520px] py-[56px] text-center">
+                        <p className="m-0 text-[13px] text-ink/50">
+                            보증서를 불러오는
+                            중입니다.
+                        </p>
+                    </Panel>
+                </main>
+            </>
+        )
+    }
+
+    if (error || !certificate) {
+        return (
+            <>
+                <Header />
+
+                <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
+                    <Panel className="w-full max-w-[520px] py-[56px] text-center">
+                        <p className="m-0 text-[13px] text-ink/50">
+                            {error ||
+                                '보증서를 찾을 수 없습니다.'}
+                        </p>
+                    </Panel>
+                </main>
+            </>
+        )
     }
 
     return (
@@ -156,7 +286,6 @@ export default function CertificatePage() {
                     DIGITAL CERTIFICATE
                 </p>
 
-                {/* 이 부분만 이미지로 저장 */}
                 <div
                     ref={certificateRef}
                     className="mx-auto mt-[26px] w-full max-w-[455px] bg-white p-[28px]"
@@ -170,31 +299,55 @@ export default function CertificatePage() {
                             />
 
                             <p className="mt-[10px] mb-0 text-[7px] tracking-[.25em] text-clay">
-                                CERTIFICATE OF AUTHENTICITY
+                                CERTIFICATE OF
+                                AUTHENTICITY
                             </p>
                         </div>
 
                         <div className="mt-[20px] flex h-[240px] items-center justify-center bg-[#d7c5a8]">
-                            {edition.images?.image2d ? (
+                            {editionImage ? (
                                 <img
-                                    src={edition.images.image2d}
-                                    alt={edition.name}
+                                    src={
+                                        editionImage
+                                    }
+                                    alt={
+                                        certificate.editionName
+                                    }
                                     className="h-[90%] w-[90%] object-contain"
-                                    onError={(event) => {
-                                        event.currentTarget.style.display = 'none'
+                                    onError={(
+                                        event,
+                                    ) => {
+                                        event.currentTarget.style.display =
+                                            'none'
                                     }}
                                 />
                             ) : (
                                 <span className="text-[8px] text-ink/35">
-                                    2D EDITION IMAGE
+                                    EDITION IMAGE
                                 </span>
                             )}
                         </div>
 
                         <h1 className="mt-[18px] mb-0 font-brand text-[22px] font-normal">
-                            Edition No. {edition.number} ·{' '}
-                            {edition.name}
+                            Edition No.{' '}
+                            {
+                                certificate.editionNumber
+                            }
                         </h1>
+
+                        <p className="mt-[5px] mb-0 text-[11px] text-ink/55">
+                            {
+                                certificate.editionName
+                            }
+                        </p>
+
+                        {certificate.category && (
+                            <p className="mt-[6px] mb-0 text-[8px] tracking-[.1em] text-ink/40">
+                                {
+                                    certificate.category
+                                }
+                            </p>
+                        )}
 
                         <div className="mt-[18px]">
                             <p className="m-0 text-[9px] font-medium">
@@ -202,7 +355,9 @@ export default function CertificatePage() {
                             </p>
 
                             <p className="mt-[5px] mb-0 text-[9px] text-ink/50">
-                                {edition.createdAt}
+                                {formatDate(
+                                    certificate.issuedAt,
+                                )}
                             </p>
                         </div>
 
@@ -212,13 +367,30 @@ export default function CertificatePage() {
                             </p>
 
                             <p className="mt-[6px] mb-0 text-[9.5px] leading-[1.8] text-ink/60">
-                                {edition.story}
+                                {certificate.story ||
+                                    '-'}
                             </p>
                         </div>
 
+                        {certificate.certificateText && (
+                            <div className="mt-[15px] border-t border-[#eee7de] pt-[14px]">
+                                <p className="m-0 text-[9px] font-medium">
+                                    Certificate
+                                </p>
+
+                                <p className="mt-[6px] mb-0 text-[9.5px] leading-[1.8] text-ink/55">
+                                    {
+                                        certificate.certificateText
+                                    }
+                                </p>
+                            </div>
+                        )}
+
                         <div className="mt-[18px] flex items-end justify-between border-t border-[#e4dacf] pt-[14px]">
                             <p className="m-0 text-[8px] text-ink/40">
-                                {edition.certificate.number}
+                                {
+                                    certificate.editionNumber
+                                }
                             </p>
 
                             <span
@@ -237,13 +409,16 @@ export default function CertificatePage() {
                         ↓ 저장
                     </Button>
 
-                    <Button onClick={handleShare}>
+                    <Button
+                        onClick={handleShare}
+                    >
                         ↗ 공유
                     </Button>
                 </div>
 
                 <p className="mt-[26px] mb-0 text-center text-[8px] tracking-[.08em] text-ink/35">
-                    보증서에는 에디션 번호와 생성 기록이 함께 저장됩니다.
+                    보증서에는 에디션 번호와 생성
+                    기록이 함께 저장됩니다.
                 </p>
             </main>
         </>
