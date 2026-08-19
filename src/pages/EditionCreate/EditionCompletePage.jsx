@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Button from '../../components/Button'
+import { clearEditionDraft } from '../../api/client'
+import { getEditionGeneration, selectEditionName } from '../../api/edition'
 
 const CATEGORY_LABELS = {
     clothing: '의류',
@@ -19,24 +21,83 @@ const CLOTHING_MAIN_LABELS = {
 export default function EditionCompletePage() {
     const navigate = useNavigate()
 
-    const form = JSON.parse(
-        sessionStorage.getItem('edition-form') || '{}',
+    // 화면에 들어올 때 한 번만 읽는다 — 매 렌더 다시 읽으면 완료 직후 세션을 비우는 순간
+    // 값이 사라져서, 콘셉트 없이 들어온 것으로 오해하고 입력 화면으로 튕긴다
+    const [form] = useState(() =>
+        JSON.parse(sessionStorage.getItem('edition-form') || '{}'),
     )
 
-    const concept = JSON.parse(
-        sessionStorage.getItem('edition-concept') || '{}',
+    const [concept] = useState(() =>
+        JSON.parse(sessionStorage.getItem('edition-concept') || '{}'),
     )
 
-    const [editionName, setEditionName] = useState(
-        `Edition No. 001 · ${concept.title || 'Memory Edition'
-        }`,
-    )
+    const [generation, setGeneration] = useState(null)
+    const [editionName, setEditionName] = useState('')
 
     const [editingName, setEditingName] =
         useState(false)
 
     const [editingValue, setEditingValue] =
-        useState(editionName)
+        useState('')
+
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState('')
+
+    const generationId = concept.generationId
+
+    // 에디션명 후보는 콘셉트가 아니라 회차에 달려 있다 — 고른 콘셉트의 회차를 가져온다
+    useEffect(() => {
+        // 콘셉트를 고르지 않고 주소로 바로 들어온 경우 — 여기서 할 수 있는 게 없다
+        if (!generationId) {
+            navigate('/edition/create', { replace: true })
+            return
+        }
+
+        let cancelled = false
+
+        getEditionGeneration(generationId)
+            .then((data) => {
+                if (cancelled) return
+
+                setGeneration(data)
+                setEditionName(
+                    data.editionName ??
+                    data.editionNameCandidates?.[0] ??
+                    '',
+                )
+            })
+            .catch((caught) => {
+                if (!cancelled) setError(caught.message)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [generationId, navigate])
+
+    const saveName = async (name) => {
+        const trimmed = name.trim()
+
+        if (!trimmed) {
+            setError('에디션명을 입력해주세요.')
+            return
+        }
+
+        setSaving(true)
+        setError('')
+
+        try {
+            const updated = await selectEditionName(generationId, trimmed)
+
+            setEditionName(updated.editionName ?? trimmed)
+            setGeneration(updated)
+            setEditingName(false)
+        } catch (caught) {
+            setError(caught.message)
+        }
+
+        setSaving(false)
+    }
 
     const material =
         form.material === '직접입력'
@@ -60,35 +121,35 @@ export default function EditionCompletePage() {
         setEditingName(true)
     }
 
-    const handleSaveName = () => {
-        if (!editingValue.trim()) return
+    const handleSaveName = () => saveName(editingValue)
 
-        setEditionName(editingValue.trim())
-        setEditingName(false)
-    }
+    const handleComplete = async () => {
+        // 수정하다 저장을 안 누르고 완료로 넘어가는 사람이 있다 — 입력한 이름을 버리지 않는다
+        const finalName = editingName ? editingValue.trim() : editionName
 
-    const handleComplete = () => {
-        const completedEdition = {
-            ...form,
-            concept,
-            editionName,
-            createdAt: '2026.08.14',
+        if (!finalName) {
+            setError('에디션명을 입력해주세요.')
+            return
         }
 
-        const existing = JSON.parse(
-            localStorage.getItem('my-editions') || '[]',
-        )
+        // 후보를 그대로 두고 넘어가는 사람이 대부분이다 — 화면에 보이던 이름을 확정하고 간다
+        if (generation?.editionName !== finalName) {
+            setSaving(true)
+            setError('')
 
-        localStorage.setItem(
-            'my-editions',
-            JSON.stringify([
-                ...existing,
-                completedEdition,
-            ]),
-        )
+            try {
+                await selectEditionName(generationId, finalName)
+            } catch (caught) {
+                setError(caught.message)
+                setSaving(false)
+                return
+            }
 
-        sessionStorage.removeItem('edition-form')
-        sessionStorage.removeItem('edition-concept')
+            setSaving(false)
+        }
+
+        // 이 회차는 끝났다 — 다음 생성이 앞 회차의 추억을 물고 가지 않게 전부 지운다
+        clearEditionDraft()
 
         navigate('/collection')
     }
@@ -110,17 +171,19 @@ export default function EditionCompletePage() {
                     <div className="mt-[40px] grid grid-cols-[310px_minmax(0,1fr)] items-center gap-[48px] max-[800px]:grid-cols-1">
                         {/* 이미지 */}
                         <div className="border-[14px] border-white bg-[#dfd0b8]">
-                            <div
-                                className="flex h-[330px] items-center justify-center"
-                                style={{
-                                    backgroundColor:
-                                        concept.color || '#d8c8ae',
-                                }}
-                            >
-                                <span className="text-[8px] tracking-[.16em] text-ink/35">
-                                    EDITION RENDER · 3D GOODS
-                                </span>
-                            </div>
+                            {concept.imageUrl ? (
+                                <img
+                                    src={concept.imageUrl}
+                                    alt={concept.conceptName ?? ''}
+                                    className="block h-[330px] w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-[330px] items-center justify-center bg-[#d8c8ae]">
+                                    <span className="text-[8px] tracking-[.16em] text-ink/35">
+                                        EDITION RENDER · 3D GOODS
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* 상세 정보 */}
@@ -135,22 +198,23 @@ export default function EditionCompletePage() {
                                                 event.target.value,
                                             )
                                         }
-                                        maxLength={60}
+                                        maxLength={50}
                                         className="h-[44px] min-w-0 flex-1 border border-ink/25 bg-white/45 px-[12px] font-brand text-[22px] outline-none focus:border-ink"
                                     />
 
                                     <button
                                         type="button"
+                                        disabled={saving}
                                         onClick={handleSaveName}
-                                        className="cursor-pointer border-0 bg-transparent text-[10px] font-medium text-ink/60 hover:text-ink"
+                                        className="cursor-pointer border-0 bg-transparent text-[10px] font-medium text-ink/60 hover:text-ink disabled:cursor-not-allowed disabled:text-ink/30"
                                     >
-                                        저장
+                                        {saving ? '저장 중...' : '저장'}
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-[12px]">
                                     <h2 className="m-0 font-brand text-[26px] font-normal">
-                                        {editionName}
+                                        {editionName || '이름을 불러오는 중'}
                                     </h2>
 
                                     <button
@@ -163,6 +227,40 @@ export default function EditionCompletePage() {
                                 </div>
                             )}
 
+                            {/* AI가 지어온 이름 후보 — 하나 고르면 그대로 확정된다 */}
+                            {generation?.editionNameCandidates?.length > 0 && (
+                                <div className="mt-[14px] flex flex-wrap items-center gap-[8px]">
+                                    <span className="text-[9px] tracking-[.12em] text-ink/45">
+                                        AI 제안
+                                    </span>
+
+                                    {generation.editionNameCandidates.map(
+                                        (candidate) => (
+                                            <button
+                                                key={candidate}
+                                                type="button"
+                                                disabled={saving}
+                                                onClick={() =>
+                                                    saveName(candidate)
+                                                }
+                                                className={`h-[28px] cursor-pointer border px-[11px] text-[10px] transition-colors duration-700 ease-film disabled:cursor-not-allowed ${editionName === candidate
+                                                    ? 'border-ink bg-ink text-cream'
+                                                    : 'border-[#ddd1c1] bg-white/50 text-ink/65 hover:border-clay'
+                                                    }`}
+                                            >
+                                                {candidate}
+                                            </button>
+                                        ),
+                                    )}
+                                </div>
+                            )}
+
+                            {error && (
+                                <p className="mt-[12px] mb-0 text-[10px] text-clay">
+                                    {error}
+                                </p>
+                            )}
+
                             {/* 생성 날짜 */}
                             <div className="mt-[24px]">
                                 <p className="m-0 text-[11px] font-medium">
@@ -170,7 +268,11 @@ export default function EditionCompletePage() {
                                 </p>
 
                                 <p className="mt-[6px] mb-0 text-[12px] text-ink/55">
-                                    2026.08.14
+                                    {generation?.createdAt
+                                        ? new Date(
+                                            generation.createdAt,
+                                        ).toLocaleDateString('ko-KR')
+                                        : '-'}
                                 </p>
                             </div>
 
@@ -194,7 +296,7 @@ export default function EditionCompletePage() {
                                     </p>
 
                                     <p className="mt-[7px] mb-0 text-[12px] font-medium">
-                                        {concept.title || '-'}
+                                        {concept.conceptName || '-'}
                                     </p>
                                 </div>
 
@@ -239,8 +341,8 @@ export default function EditionCompletePage() {
                     </div>
 
                     <div className="mt-[38px] flex justify-end">
-                        <Button onClick={handleComplete}>
-                            완료
+                        <Button disabled={saving} onClick={handleComplete}>
+                            {saving ? '저장 중...' : '완료'}
                         </Button>
                     </div>
                 </div>

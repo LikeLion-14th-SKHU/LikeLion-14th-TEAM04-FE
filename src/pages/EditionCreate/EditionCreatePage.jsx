@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
@@ -66,11 +66,11 @@ const CLOTHING_CATEGORIES = {
     },
 }
 
+// 굿즈 세부 카테고리에는 '선택안함'이 없다 — 서버가 목표 카테고리 두 개를 모두 필수로 받는다
 const PRODUCT_CATEGORIES = {
     clothing: {
         label: '의류',
         subCategories: [
-            '선택안함',
             '니트',
             '가디건',
             '셔츠',
@@ -85,7 +85,6 @@ const PRODUCT_CATEGORIES = {
     bag: {
         label: '가방',
         subCategories: [
-            '선택안함',
             '핸드백',
             '토트백',
             '백팩',
@@ -97,7 +96,6 @@ const PRODUCT_CATEGORIES = {
     accessory: {
         label: '악세사리',
         subCategories: [
-            '선택안함',
             '벨트',
             '스카프',
             '지갑',
@@ -106,6 +104,18 @@ const PRODUCT_CATEGORIES = {
         ],
     },
 }
+
+// 추억(POST /memories)에 실려 가는 값들. 이게 바뀌면 추억을 새로 만들어야 한다.
+// 나머지(mainCategory·subCategory)는 회차의 목표 카테고리라 추억과 무관하다
+const MEMORY_FIELDS = [
+    'image',
+    'story',
+    'material',
+    'materialCustom',
+    'clothingMain',
+    'clothingSub',
+    'clothingSubCustom',
+]
 
 const EMPTY_FORM = {
     image: '',
@@ -131,8 +141,31 @@ export default function EditionCreatePage() {
     const [polishing, setPolishing] = useState(false)
     const [guideChecked, setGuideChecked] = useState(false)
 
+    const previousForm = useRef(form)
+
     useEffect(() => {
         sessionStorage.setItem('edition-form', JSON.stringify(form))
+
+        const before = previousForm.current
+        previousForm.current = form
+
+        // 첫 렌더는 복원된 값을 다시 쓰는 것뿐이다
+        if (before === form) return
+
+        // 이미 고른 값을 다시 누른 경우 — 바뀐 게 없으니 버릴 것도 없다
+        const changed = Object.keys(form).filter(
+            (key) => before[key] !== form[key],
+        )
+
+        if (changed.length === 0) return
+
+        // 굿즈 카테고리만 바꿨으면 추억은 그대로 유효하다 — 사진을 다시 올릴 이유가 없다
+        if (changed.some((key) => MEMORY_FIELDS.includes(key))) {
+            sessionStorage.removeItem('edition-memory-id')
+        }
+
+        // 접수된 회차는 더 이상 이 입력의 것이 아니다
+        sessionStorage.removeItem('edition-generation-id')
     }, [form])
 
     const updateForm = (key, value) => {
@@ -259,7 +292,45 @@ export default function EditionCreatePage() {
 
         sessionStorage.setItem('edition-form', JSON.stringify(form))
 
-        navigate('/edition/create/generating')
+        // 서버는 키가 아니라 라벨('상의'·'가방')을 받는다. 라벨 표가 이 파일에 있으니 여기서 만든다
+        const request = {
+            story: form.story.trim(),
+
+            categoryMain: CLOTHING_CATEGORIES[form.clothingMain].label,
+
+            categorySub:
+                form.clothingSub === '직접입력'
+                    ? form.clothingSubCustom.trim()
+                    : form.clothingSub,
+
+            materialUser:
+                form.material === '직접입력'
+                    ? form.materialCustom.trim()
+                    : form.material,
+
+            editionCategoryMain: PRODUCT_CATEGORIES[form.mainCategory].label,
+
+            editionCategorySub: form.subCategory,
+        }
+
+        const previous = JSON.parse(
+            sessionStorage.getItem('edition-request') || 'null',
+        )
+
+        // 만들 굿즈를 바꿨으면 앞 회차는 다른 물건이다 — 새로 돌려야 한다
+        const targetChanged =
+            previous?.editionCategoryMain !== request.editionCategoryMain ||
+            previous?.editionCategorySub !== request.editionCategorySub
+
+        sessionStorage.setItem('edition-request', JSON.stringify(request))
+
+        // 그대로 다시 들어왔으면 앞 회차에서 본 콘셉트로 돌아간다 —
+        // '다음'을 다시 누른 것만으로 회차를 한 번 더 결제하면 안 된다
+        navigate(
+            sessionStorage.getItem('edition-memory-id') && !targetChanged
+                ? '/edition/create/concepts'
+                : '/edition/create/generating',
+        )
     }
 
     return (
