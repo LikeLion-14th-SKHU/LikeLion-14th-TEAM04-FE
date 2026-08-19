@@ -1,7 +1,7 @@
 export default function CurationCard({ product }) {
     return (
-        <article className="flex h-full flex-col border border-frame bg-white p-[14px]">
-            <div className="relative flex h-[230px] items-center justify-center overflow-hidden bg-[#dfd2bd]">
+        <article className="flex h-full flex-col bg-[#f6f0e6] p-[14px]">
+            <div className="relative aspect-square w-full overflow-hidden bg-[#ded0ba]">
                 {product.imageUrl ? (
                     <img
                         src={product.imageUrl}
@@ -38,18 +38,18 @@ export default function CurationCard({ product }) {
                 </h3>
 
                 {product.tagline && (
-                    <p className="mt-[6px] mb-0 text-[10px] leading-[1.6] text-ink/45">
+                    <p className="mt-[6px] mb-0 text-[10px] leading-[1.6] text-ink/50">
                         {product.tagline}
                     </p>
                 )}
 
                 {product.reason && (
-                    <div className="mt-[16px] border-t border-[#eee7de] pt-[13px]">
-                        <p className="m-0 text-[8px] font-medium text-ink/60">
+                    <div className="mt-[16px] border-t border-line pt-[13px]">
+                        <p className="m-0 text-[8px] font-medium text-ink/65">
                             추천 이유
                         </p>
 
-                        <p className="mt-[6px] mb-0 text-[10px] leading-[1.75] text-ink/55">
+                        <p className="mt-[6px] mb-0 text-[10px] leading-[1.75] text-ink/60">
                             {product.reason}
                         </p>
                     </div>

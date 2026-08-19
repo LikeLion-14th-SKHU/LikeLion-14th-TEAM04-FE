@@ -3,7 +3,6 @@ import { useParams } from 'react-router'
 import { toPng } from 'html-to-image'
 
 import Header from '../../components/Header'
-import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 
 import { getCertificate } from '../../api/certificate'
@@ -126,7 +125,7 @@ export default function CertificatePage() {
     }
 
     // =========================
-    // PNG 생성
+    // 보증서 PNG 생성
     // =========================
     const createCertificateImage =
         async () => {
@@ -144,7 +143,7 @@ export default function CertificatePage() {
                     pixelRatio: 2,
                     cacheBust: false,
                     backgroundColor:
-                        '#ffffff',
+                        '#f6f0e6',
                 },
             )
         }
@@ -162,7 +161,11 @@ export default function CertificatePage() {
             const link =
                 document.createElement('a')
 
-            link.download = `${certificate.editionNumber}.png`
+            link.download = `${certificate.certificateText ||
+                certificate.editionNumber ||
+                'certificate'
+                }.png`
+
             link.href = dataUrl
 
             document.body.appendChild(link)
@@ -195,7 +198,10 @@ export default function CertificatePage() {
 
             const file = new File(
                 [blob],
-                `${certificate.editionNumber}.png`,
+                `${certificate.certificateText ||
+                certificate.editionNumber ||
+                'certificate'
+                }.png`,
                 {
                     type: 'image/png',
                 },
@@ -243,35 +249,41 @@ export default function CertificatePage() {
         }
     }
 
+    // =========================
+    // 로딩
+    // =========================
     if (loading) {
         return (
             <>
                 <Header />
 
                 <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
-                    <Panel className="w-full max-w-[520px] py-[56px] text-center">
+                    <div className="w-full max-w-[520px] bg-[#f6f0e6] py-[56px] text-center">
                         <p className="m-0 text-[13px] text-ink/50">
                             보증서를 불러오는
                             중입니다.
                         </p>
-                    </Panel>
+                    </div>
                 </main>
             </>
         )
     }
 
+    // =========================
+    // 오류
+    // =========================
     if (error || !certificate) {
         return (
             <>
                 <Header />
 
                 <main className="flex min-h-[calc(100dvh-56px)] items-center justify-center px-[24px]">
-                    <Panel className="w-full max-w-[520px] py-[56px] text-center">
-                        <p className="m-0 text-[13px] text-ink/50">
+                    <div className="w-full max-w-[520px] bg-[#f6f0e6] py-[56px] text-center">
+                        <p className="m-0 text-[13px] text-[#7d4526]">
                             {error ||
                                 '보증서를 찾을 수 없습니다.'}
                         </p>
-                    </Panel>
+                    </div>
                 </main>
             </>
         )
@@ -282,19 +294,22 @@ export default function CertificatePage() {
             <Header />
 
             <main className="min-h-[calc(100dvh-56px)] px-[24px] pt-[36px] pb-[48px]">
+                {/* 상단 타이틀 */}
                 <p className="m-0 text-center text-[8px] tracking-[.24em] text-ink/40">
                     DIGITAL CERTIFICATE
                 </p>
 
+                {/* 보증서 */}
                 <div
                     ref={certificateRef}
-                    className="mx-auto mt-[26px] w-full max-w-[455px] bg-white p-[28px]"
+                    className="mx-auto mt-[26px] w-full max-w-[455px] bg-[#f6f0e6] p-[28px]"
                 >
                     <div className="border border-[#d6c6b3] p-[20px]">
+                        {/* 로고 */}
                         <div className="text-center">
                             <img
                                 src="/assets/logo.png"
-                                alt=""
+                                alt="Memory Atelier"
                                 className="mx-auto h-[44px] w-auto"
                             />
 
@@ -304,7 +319,8 @@ export default function CertificatePage() {
                             </p>
                         </div>
 
-                        <div className="mt-[20px] flex h-[240px] items-center justify-center bg-[#d7c5a8]">
+                        {/* 에디션 이미지 */}
+                        <div className="mt-[20px] flex aspect-square w-full items-center justify-center overflow-hidden bg-[#ded0ba]">
                             {editionImage ? (
                                 <img
                                     src={
@@ -313,7 +329,7 @@ export default function CertificatePage() {
                                     alt={
                                         certificate.editionName
                                     }
-                                    className="h-[90%] w-[90%] object-contain"
+                                    className="h-full w-full object-contain p-[18px]"
                                     onError={(
                                         event,
                                     ) => {
@@ -322,25 +338,23 @@ export default function CertificatePage() {
                                     }}
                                 />
                             ) : (
-                                <span className="text-[8px] text-ink/35">
+                                <span className="text-[8px] tracking-[.12em] text-ink/35">
                                     EDITION IMAGE
                                 </span>
                             )}
                         </div>
 
-                        <h1 className="mt-[18px] mb-0 font-brand text-[22px] font-normal">
-                            Edition No.{' '}
-                            {
-                                certificate.editionNumber
-                            }
+                        {/* 에디션 이름 */}
+                        <h1 className="mt-[18px] mb-0 text-[22px] font-normal">
+                            {certificate.editionName}
                         </h1>
 
+                        {/* 에디션 번호 */}
                         <p className="mt-[5px] mb-0 text-[11px] text-ink/55">
-                            {
-                                certificate.editionName
-                            }
+                            Edition No. {certificate.editionNumber}
                         </p>
 
+                        {/* 카테고리 */}
                         {certificate.category && (
                             <p className="mt-[6px] mb-0 text-[8px] tracking-[.1em] text-ink/40">
                                 {
@@ -349,6 +363,7 @@ export default function CertificatePage() {
                             </p>
                         )}
 
+                        {/* 생성 날짜 */}
                         <div className="mt-[18px]">
                             <p className="m-0 text-[9px] font-medium">
                                 생성 날짜
@@ -361,6 +376,7 @@ export default function CertificatePage() {
                             </p>
                         </div>
 
+                        {/* 추억 스토리 */}
                         <div className="mt-[15px]">
                             <p className="m-0 text-[9px] font-medium">
                                 추억 스토리
@@ -372,35 +388,21 @@ export default function CertificatePage() {
                             </p>
                         </div>
 
-                        {certificate.certificateText && (
-                            <div className="mt-[15px] border-t border-[#eee7de] pt-[14px]">
-                                <p className="m-0 text-[9px] font-medium">
-                                    Certificate
-                                </p>
+                        {/* 보증서 번호 */}
+                        <div className="mt-[18px] flex items-end justify-between border-t border-[#d8cbbb] pt-[14px]">
+                            <div>
 
-                                <p className="mt-[6px] mb-0 text-[9.5px] leading-[1.8] text-ink/55">
-                                    {
-                                        certificate.certificateText
-                                    }
+                                <p className="mt-[4px] mb-0 text-[8px] text-ink/55">
+                                    {certificate.certificateText ||
+                                        '-'}
                                 </p>
                             </div>
-                        )}
 
-                        <div className="mt-[18px] flex items-end justify-between border-t border-[#e4dacf] pt-[14px]">
-                            <p className="m-0 text-[8px] text-ink/40">
-                                {
-                                    certificate.editionNumber
-                                }
-                            </p>
-
-                            <span
-                                className="size-[34px] bg-[#dfd2bd]"
-                                aria-hidden="true"
-                            />
                         </div>
                     </div>
                 </div>
 
+                {/* 저장 / 공유 */}
                 <div className="mx-auto mt-[18px] grid w-full max-w-[455px] grid-cols-2 gap-[10px]">
                     <Button
                         variant="secondary"
