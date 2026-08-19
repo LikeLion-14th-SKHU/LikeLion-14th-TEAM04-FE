@@ -4,11 +4,9 @@ import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 import ConceptCard from './components/ConceptCard'
+import { arrangeConcepts, isSelectable } from './conceptOrder'
 import { getEditionGenerations, unlockConcept } from '../../api/edition'
 import { getMe, useMe } from '../../api/user'
-
-const isSelectable = (concept) =>
-    concept.isUnlocked && concept.status !== 'FAILED'
 
 // 회차는 돌린 순서대로, 회차 안에서는 노출 순서대로 이어 붙인다.
 // 어느 회차의 콘셉트인지는 뒤에서 에디션명을 정할 때 필요하다
@@ -16,8 +14,7 @@ const flattenConcepts = (generations) =>
     [...generations]
         .sort((a, b) => a.generationNo - b.generationNo)
         .flatMap((generation) =>
-            [...generation.concepts]
-                .sort((a, b) => a.displayOrder - b.displayOrder)
+            arrangeConcepts(generation.concepts)
                 .map((concept) => ({
                     ...concept,
                     generationId: generation.generationId,

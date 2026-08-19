@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict'
+import {
+    arrangeConcepts,
+    isSelectable,
+} from '../src/pages/EditionCreate/conceptOrder.js'
 
 const baseUrl = process.env.API_BASE_URL ?? 'https://api.memory-atelier.store/api/v1'
 const docs = await fetch(`${baseUrl}/api-docs`).then((response) => response.json())
@@ -35,6 +39,22 @@ assert.deepEqual(
 assert.deepEqual(
     docs.components.schemas.EditionConceptResponseDto.properties.status.enum,
     ['PENDING', 'IMAGE_READY', 'FAILED'],
+)
+
+// 한 회차의 열린 콘셉트는 가운데에 놓고, 준비되지 않은 콘셉트는 선택하지 않는다
+const concepts = [
+    { conceptId: 1, displayOrder: 1, status: 'IMAGE_READY', isUnlocked: true },
+    { conceptId: 2, displayOrder: 2, status: 'IMAGE_READY', isUnlocked: false },
+    { conceptId: 3, displayOrder: 3, status: 'FAILED', isUnlocked: false },
+]
+
+assert.deepEqual(
+    arrangeConcepts(concepts).map(({ conceptId }) => conceptId),
+    [2, 1, 3],
+)
+assert.equal(
+    isSelectable({ status: 'PENDING', isUnlocked: true }),
+    false,
 )
 
 console.log('Edition generation API contract check passed')
