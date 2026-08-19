@@ -170,7 +170,7 @@ export default function EditionGeneratingPage() {
                                 </div>
 
                                 <p className="mt-[18px] mb-0 text-[8px] tracking-[.14em] text-ink/35">
-                                    약 40초 소요 · 창을 닫아도 진행됩니다
+                                    약 3~5분 소요 · 창을 닫아도 진행됩니다
                                 </p>
                             </>
                         )}

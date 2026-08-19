@@ -11,7 +11,7 @@ export default function ConceptCard({
 
     return (
         <article
-            className={`relative bg-white p-[10px] ${selected
+            className={`relative bg-[#f6f0e6] p-[10px] ${selected
                     ? 'border-2 border-ink'
                     : 'border border-frame'
                 }`}
@@ -71,10 +71,10 @@ export default function ConceptCard({
                 disabled={locked || failed || pending}
                 onClick={onSelect}
                 className={`mt-[14px] h-[38px] w-full border text-[9.5px] transition-colors duration-700 ease-film ${selected
-                        ? 'border-ink bg-ink text-cream'
-                        : locked || failed || pending
-                            ? 'cursor-not-allowed border-frame bg-[#f6f2eb] text-ink/25'
-                            : 'cursor-pointer border-[#d6cabb] bg-white text-ink hover:border-ink'
+                    ? 'border-ink bg-ink text-cream'
+                    : locked || failed || pending
+                        ? 'cursor-not-allowed border-frame bg-[#f6f2eb] text-ink/25'
+                        : 'cursor-pointer border-[#d6cabb] bg-white text-ink hover:border-ink'
                     }`}
             >
                 {selected
