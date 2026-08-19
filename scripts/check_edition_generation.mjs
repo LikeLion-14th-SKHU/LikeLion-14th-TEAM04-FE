@@ -10,11 +10,13 @@ const docs = await fetch(`${baseUrl}/api-docs`).then((response) => response.json
 // 생성 흐름: 추억 등록 → AI 분석 → 콘셉트 3장 생성 요청 → 진행 상태 폴링 → 잠금 해제
 assert.ok(docs.paths['/memories'].post)
 assert.ok(docs.paths['/memories/{memoryId}/analyze'].post)
+assert.ok(docs.paths['/memories/{memoryId}/story-source'].patch)
 assert.ok(docs.paths['/memories/{memoryId}/edition-generations'].post)
 assert.ok(docs.paths['/edition-generations/{generationId}'].get)
 assert.ok(docs.paths['/edition-concepts/{conceptId}/unlock'].post)
 assert.ok(docs.paths['/edition-concepts/{conceptId}/certificate'].get)
 assert.ok(docs.paths['/edition-concepts/{conceptId}/certificate'].post)
+assert.ok(docs.paths['/me/collection'].get)
 
 // 콘셉트 화면은 회차 이력을, 완료 화면은 에디션명 선택을 쓴다
 assert.ok(docs.paths['/memories/{memoryId}/edition-generations'].get)
@@ -38,6 +40,13 @@ assert.equal(
 assert.ok(docs.components.schemas.CertificateResponseDto.properties.conceptId)
 assert.ok(docs.components.schemas.CertificateResponseDto.properties.certificate)
 
+// 컬렉션 요약은 전체 개수와 보증서 발급 시각으로 계산한다
+assert.ok(
+    docs.components.schemas.PageResponseCollectionCardResponseDto.properties
+        .totalElements,
+)
+assert.ok(docs.components.schemas.CertificateViewDto.properties.issuedAt)
+
 // 이력 응답은 페이지라 content 로 감싸여 있다
 assert.ok(
     docs.components.schemas.PageResponseEditionGenerationResponseDto
@@ -47,6 +56,14 @@ assert.ok(
 // 사진은 파일이라 multipart 로 보낸다
 assert.ok(
     docs.paths['/memories'].post.requestBody.content['multipart/form-data'],
+)
+
+// AI 분석 응답의 다듬은 사연을 선택하면 실제 에디션 생성에도 그 문장을 사용한다
+assert.ok(docs.components.schemas.MemoryResponseDto.properties.storyRefined)
+assert.ok(
+    docs.paths['/memories/{memoryId}/story-source'].patch.requestBody.content[
+        'application/json'
+    ],
 )
 
 // 생성 요청은 목표 카테고리 두 개가 모두 필수다

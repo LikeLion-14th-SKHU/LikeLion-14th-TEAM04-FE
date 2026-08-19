@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Panel from '../../components/Panel'
 import Button from '../../components/Button'
+import {
+    analyzeMemory,
+    createMemory,
+    selectStorySource,
+} from '../../api/edition'
 
 const MATERIALS = [
     '데님',
@@ -129,6 +134,27 @@ const EMPTY_FORM = {
     subCategory: '',
 }
 
+const editionRequestOf = (form) => ({
+    story: form.story.trim(),
+
+    categoryMain: CLOTHING_CATEGORIES[form.clothingMain].label,
+
+    categorySub:
+        form.clothingSub === '직접입력'
+            ? form.clothingSubCustom.trim()
+            : form.clothingSub,
+
+    materialUser:
+        form.material === '직접입력'
+            ? form.materialCustom.trim()
+            : form.material,
+
+    editionCategoryMain:
+        PRODUCT_CATEGORIES[form.mainCategory]?.label ?? '',
+
+    editionCategorySub: form.subCategory,
+})
+
 export default function EditionCreatePage() {
     const navigate = useNavigate()
 
@@ -139,9 +165,12 @@ export default function EditionCreatePage() {
     })
 
     const [polishing, setPolishing] = useState(false)
+    const [polishError, setPolishError] = useState('')
     const [guideChecked, setGuideChecked] = useState(false)
 
     const previousForm = useRef(form)
+    const memoryVersion = useRef(0)
+    const preservePolishedMemory = useRef(false)
 
     useEffect(() => {
         sessionStorage.setItem('edition-form', JSON.stringify(form))
@@ -161,7 +190,13 @@ export default function EditionCreatePage() {
 
         // 굿즈 카테고리만 바꿨으면 추억은 그대로 유효하다 — 사진을 다시 올릴 이유가 없다
         if (changed.some((key) => MEMORY_FIELDS.includes(key))) {
-            sessionStorage.removeItem('edition-memory-id')
+            memoryVersion.current += 1
+
+            if (preservePolishedMemory.current) {
+                preservePolishedMemory.current = false
+            } else {
+                sessionStorage.removeItem('edition-memory-id')
+            }
         }
 
         // 접수된 회차는 더 이상 이 입력의 것이 아니다
@@ -189,24 +224,77 @@ export default function EditionCreatePage() {
         reader.readAsDataURL(file)
     }
 
-    const handlePolishStory = () => {
+    const handlePolishStory = async () => {
         if (!form.story.trim()) return
 
-        setPolishing(true)
-
-        // TODO: 실제 AI 문장 다듬기 API 연결
-        setTimeout(() => {
-            const cleaned = form.story.trim().replace(/\s+/g, ' ')
-
-            updateForm(
-                'story',
-                cleaned.includes('기억')
-                    ? cleaned
-                    : `${cleaned} 오랫동안 간직하고 싶은 기억이 담긴 옷입니다.`,
+        if (!form.image || !materialCompleted || !clothingCompleted) {
+            setPolishError(
+                '사진·재질·의류 종류를 먼저 입력해주세요.',
             )
+            return
+        }
 
+        if (!guideChecked) {
+            setPolishError(
+                '아래 안내 내용을 확인한 후 AI 다듬기를 이용해주세요.',
+            )
+            return
+        }
+
+        const startedAtVersion = memoryVersion.current
+        const request = editionRequestOf(form)
+
+        setPolishing(true)
+        setPolishError('')
+
+        try {
+            let memoryId = sessionStorage.getItem('edition-memory-id')
+
+            if (!memoryId) {
+                const memory = await createMemory({
+                    image: form.image,
+                    story: request.story,
+                    categoryMain: request.categoryMain,
+                    categorySub: request.categorySub,
+                    materialUser: request.materialUser,
+                    editionCategory: request.editionCategoryMain || undefined,
+                })
+
+                memoryId = memory.memoryId
+            }
+
+            const analyzed = await analyzeMemory(memoryId)
+            const refined = analyzed.storyRefined?.trim()
+
+            if (!refined) {
+                throw new Error(
+                    'AI가 다듬은 사연을 반환하지 않았습니다.',
+                )
+            }
+
+            await selectStorySource(memoryId, true)
+
+            // 요청 중 입력이 바뀌었으면 예전 분석 결과로 덮어쓰지 않는다
+            if (memoryVersion.current !== startedAtVersion) {
+                setPolishError(
+                    '입력이 변경되어 다듬기 결과를 반영하지 않았습니다. 다시 시도해주세요.',
+                )
+                return
+            }
+
+            sessionStorage.setItem('edition-memory-id', memoryId)
+
+            if (refined !== form.story) {
+                preservePolishedMemory.current = true
+                updateForm('story', refined)
+            }
+        } catch (caught) {
+            setPolishError(
+                caught.message ?? '사연을 다듬지 못했습니다.',
+            )
+        } finally {
             setPolishing(false)
-        }, 700)
+        }
     }
 
     const subCategories = form.mainCategory
@@ -288,30 +376,12 @@ export default function EditionCreatePage() {
     const incompleteMessage = getIncompleteMessage()
 
     const handleNext = () => {
-        if (!canContinue) return
+        if (!canContinue || polishing) return
 
         sessionStorage.setItem('edition-form', JSON.stringify(form))
 
         // 서버는 키가 아니라 라벨('상의'·'가방')을 받는다. 라벨 표가 이 파일에 있으니 여기서 만든다
-        const request = {
-            story: form.story.trim(),
-
-            categoryMain: CLOTHING_CATEGORIES[form.clothingMain].label,
-
-            categorySub:
-                form.clothingSub === '직접입력'
-                    ? form.clothingSubCustom.trim()
-                    : form.clothingSub,
-
-            materialUser:
-                form.material === '직접입력'
-                    ? form.materialCustom.trim()
-                    : form.material,
-
-            editionCategoryMain: PRODUCT_CATEGORIES[form.mainCategory].label,
-
-            editionCategorySub: form.subCategory,
-        }
+        const request = editionRequestOf(form)
 
         const previous = JSON.parse(
             sessionStorage.getItem('edition-request') || 'null',
@@ -447,6 +517,12 @@ export default function EditionCreatePage() {
                                     <p className="mt-[5px] mb-0 text-right text-[8px] text-ink/35">
                                         {form.story.length} / 500
                                     </p>
+
+                                    {polishError && (
+                                        <p className="mt-[8px] mb-0 text-[9px] text-clay">
+                                            {polishError}
+                                        </p>
+                                    )}
                                 </section>
                             </div>
 
@@ -689,7 +765,7 @@ export default function EditionCreatePage() {
                                         )}
 
                                         <Button
-                                            disabled={!canContinue}
+                                            disabled={!canContinue || polishing}
                                             onClick={handleNext}
                                             className="min-w-[76px]"
                                         >
