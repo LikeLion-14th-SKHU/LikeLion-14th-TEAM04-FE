@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
-import Panel from '../../components/Panel'
 import Button from '../../components/Button'
 import ConceptCard from './components/ConceptCard'
 import { arrangeConcepts, isSelectable } from './conceptOrder'
@@ -149,130 +148,128 @@ export default function EditionConceptPage() {
 
             <main className="min-h-[calc(100dvh-56px)] w-full">
                 <div className="mx-auto w-full max-w-[1280px] px-[48px] pt-[38px] pb-[38px] max-[860px]:px-[22px]">
-                    <Panel>
-                        <div className="flex items-center gap-[12px]">
-                            <span className="text-[8px] tracking-[.22em] text-clay">
-                                STEP 03 / 03
-                            </span>
+                    <div className="flex items-center gap-[12px]">
+                        <span className="text-[8px] tracking-[.22em] text-clay">
+                            STEP 03 / 03
+                        </span>
 
-                            <span className="h-px w-[52px] bg-ink" />
-                            <span className="h-px w-[44px] bg-ink" />
-                            <span className="h-px w-[44px] bg-ink" />
-                        </div>
+                        <span className="h-px w-[52px] bg-ink" />
+                        <span className="h-px w-[44px] bg-ink" />
+                        <span className="h-px w-[44px] bg-ink" />
+                    </div>
 
-                        <h1 className="mt-[16px] mb-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em]">
-                            에디션 콘셉트 선택
-                        </h1>
+                    <h1 className="mt-[16px] mb-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em]">
+                        에디션 콘셉트 선택
+                    </h1>
 
-                        <p className="mt-[10px] mb-0 text-[12px] text-ink/52">
-                            AI가 제안한 방향을 확인하고 원하는 콘셉트를
-                            선택하세요.
-                        </p>
+                    <p className="mt-[10px] mb-0 text-[12px] text-ink/52">
+                        AI가 제안한 방향을 확인하고 원하는 콘셉트를
+                        선택하세요.
+                    </p>
 
-                        {concepts === null ? (
-                            <div className="mt-[26px] py-[56px] text-center">
-                                <p className="m-0 text-[12px] text-ink/45">
-                                    {error || '콘셉트를 불러오는 중입니다.'}
-                                </p>
+                    {concepts === null ? (
+                        <div className="mt-[26px] py-[56px] text-center">
+                            <p className="m-0 text-[12px] text-ink/45">
+                                {error || '콘셉트를 불러오는 중입니다.'}
+                            </p>
 
-                                {/* 불러오지 못하면 이 화면에 갇힌다 — 나갈 길을 남긴다 */}
-                                {error && (
-                                    <div className="mt-[20px] flex justify-center">
-                                        <Button
-                                            variant="secondary"
-                                            href="/edition/create"
-                                        >
-                                            입력 화면으로
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="mt-[26px] grid grid-cols-3 gap-[18px] max-[850px]:grid-cols-2 max-[560px]:grid-cols-1">
-                                    {concepts.map((concept) => (
-                                        <ConceptCard
-                                            key={concept.conceptId}
-                                            concept={concept}
-                                            locked={!concept.isUnlocked}
-                                            selected={
-                                                selectedId === concept.conceptId
-                                            }
-                                            onSelect={() =>
-                                                setSelectedId(concept.conceptId)
-                                            }
-                                        />
-                                    ))}
+                            {/* 불러오지 못하면 이 화면에 갇힌다 — 나갈 길을 남긴다 */}
+                            {error && (
+                                <div className="mt-[20px] flex justify-center">
+                                    <Button
+                                        variant="secondary"
+                                        href="/edition/create"
+                                    >
+                                        입력 화면으로
+                                    </Button>
                                 </div>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mt-[26px] grid grid-cols-3 gap-[18px] max-[850px]:grid-cols-2 max-[560px]:grid-cols-1">
+                                {concepts.map((concept) => (
+                                    <ConceptCard
+                                        key={concept.conceptId}
+                                        concept={concept}
+                                        locked={!concept.isUnlocked}
+                                        selected={
+                                            selectedId === concept.conceptId
+                                        }
+                                        onSelect={() =>
+                                            setSelectedId(concept.conceptId)
+                                        }
+                                    />
+                                ))}
+                            </div>
 
-                                {/* 콘셉트 열람 — 블러를 열지 않고도 다음 회차를 돌릴 수 있어야 한다 */}
-                                <div className="mt-[22px] border-t border-[#ddd1c1] pt-[18px]">
-                                    {lockedConcepts.length > 0 && (
-                                        <div className="mb-[16px]">
-                                            <button
-                                                type="button"
-                                                disabled={unlocking}
-                                                onClick={handleUnlockBlurred}
-                                                className="cursor-pointer border-0 bg-transparent p-0 text-[10px] text-ink transition-colors hover:text-clay disabled:cursor-not-allowed disabled:text-ink/30"
-                                            >
-                                                {unlocking
-                                                    ? '여는 중...'
-                                                    : '+ 블러 콘셉트 열람하기'}
-
-                                                <span className="ml-[7px] text-[8px] text-ink/40">
-                                                    (크레딧 차감)
-                                                </span>
-                                            </button>
-
-                                            <p className="mt-[7px] mb-0 text-[8px] text-ink/35">
-                                                블러 처리된 콘셉트{' '}
-                                                {lockedConcepts.length}장을 함께
-                                                확인할 수 있습니다.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div>
+                            {/* 콘셉트 열람 — 블러를 열지 않고도 다음 회차를 돌릴 수 있어야 한다 */}
+                            <div className="mt-[22px] border-t border-[#ddd1c1] pt-[18px]">
+                                {lockedConcepts.length > 0 && (
+                                    <div className="mb-[16px]">
                                         <button
                                             type="button"
-                                            onClick={handleAddConcepts}
-                                            className="cursor-pointer border-0 bg-transparent p-0 text-[10px] text-ink transition-colors hover:text-clay"
+                                            disabled={unlocking}
+                                            onClick={handleUnlockBlurred}
+                                            className="cursor-pointer border-0 bg-transparent p-0 text-[10px] text-ink transition-colors hover:text-clay disabled:cursor-not-allowed disabled:text-ink/30"
                                         >
-                                            + 콘셉트 3개 더 생성하기
+                                            {unlocking
+                                                ? '여는 중...'
+                                                : '+ 블러 콘셉트 열람하기'}
+
+                                            <span className="ml-[7px] text-[8px] text-ink/40">
+                                                (크레딧 차감)
+                                            </span>
                                         </button>
 
                                         <p className="mt-[7px] mb-0 text-[8px] text-ink/35">
-                                            무료 생성 횟수를 넘긴 회차부터는
-                                            크레딧이 차감됩니다.
+                                            블러 처리된 콘셉트{' '}
+                                            {lockedConcepts.length}장을 함께
+                                            확인할 수 있습니다.
                                         </p>
                                     </div>
+                                )}
 
-                                    {error && (
-                                        <p className="mt-[10px] mb-0 text-[10px] text-clay">
-                                            {error}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="mt-[20px] flex items-center justify-end gap-[20px]">
-                                    <p className="m-0 text-[8px] text-ink/40">
-                                        보유 크레딧{' '}
-                                        {(me?.credit ?? 0).toLocaleString(
-                                            'ko-KR',
-                                        )}{' '}
-                                        C
-                                    </p>
-
-                                    <Button
-                                        disabled={!selectedId}
-                                        onClick={handleNext}
+                                <div>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddConcepts}
+                                        className="cursor-pointer border-0 bg-transparent p-0 text-[10px] text-ink transition-colors hover:text-clay"
                                     >
-                                        다음
-                                    </Button>
+                                        + 콘셉트 3개 더 생성하기
+                                    </button>
+
+                                    <p className="mt-[7px] mb-0 text-[8px] text-ink/35">
+                                        무료 생성 횟수를 넘긴 회차부터는
+                                        크레딧이 차감됩니다.
+                                    </p>
                                 </div>
-                            </>
-                        )}
-                    </Panel>
+
+                                {error && (
+                                    <p className="mt-[10px] mb-0 text-[10px] text-clay">
+                                        {error}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="mt-[20px] flex items-center justify-end gap-[20px]">
+                                <p className="m-0 text-[8px] text-ink/40">
+                                    보유 크레딧{' '}
+                                    {(me?.credit ?? 0).toLocaleString(
+                                        'ko-KR',
+                                    )}{' '}
+                                    C
+                                </p>
+
+                                <Button
+                                    disabled={!selectedId}
+                                    onClick={handleNext}
+                                >
+                                    다음
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </main>
         </>
