@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Button from '../../components/Button'
 import { clearEditionDraft } from '../../api/client'
+import { createCertificate } from '../../api/certificate'
 import { getEditionGeneration, selectEditionName } from '../../api/edition'
 
 const CATEGORY_LABELS = {
@@ -132,26 +133,29 @@ export default function EditionCompletePage() {
             return
         }
 
-        // 후보를 그대로 두고 넘어가는 사람이 대부분이다 — 화면에 보이던 이름을 확정하고 간다
-        if (generation?.editionName !== finalName) {
-            setSaving(true)
-            setError('')
+        setSaving(true)
+        setError('')
 
-            try {
-                await selectEditionName(generationId, finalName)
-            } catch (caught) {
-                setError(caught.message)
-                setSaving(false)
-                return
+        try {
+            // 후보를 그대로 두고 넘어가는 사람이 대부분이다 — 화면에 보이던 이름을 확정하고 간다
+            if (generation?.editionName !== finalName) {
+                const updated = await selectEditionName(generationId, finalName)
+
+                setGeneration(updated)
+                setEditionName(updated.editionName ?? finalName)
+                setEditingName(false)
             }
 
+            // 보증서 발급이 최종 확정이다. 성공해야 컬렉션에 자동으로 등록된다
+            await createCertificate(concept.conceptId)
+
+            // 이 회차는 끝났다 — 다음 생성이 앞 회차의 추억을 물고 가지 않게 전부 지운다
+            clearEditionDraft()
+            navigate('/collection')
+        } catch (caught) {
+            setError(caught.message)
             setSaving(false)
         }
-
-        // 이 회차는 끝났다 — 다음 생성이 앞 회차의 추억을 물고 가지 않게 전부 지운다
-        clearEditionDraft()
-
-        navigate('/collection')
     }
 
     return (
@@ -342,7 +346,7 @@ export default function EditionCompletePage() {
 
                     <div className="mt-[38px] flex justify-end">
                         <Button disabled={saving} onClick={handleComplete}>
-                            {saving ? '저장 중...' : '완료'}
+                            {saving ? '확정 중...' : '완료'}
                         </Button>
                     </div>
                 </div>
