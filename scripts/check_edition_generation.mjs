@@ -13,10 +13,30 @@ assert.ok(docs.paths['/memories/{memoryId}/analyze'].post)
 assert.ok(docs.paths['/memories/{memoryId}/edition-generations'].post)
 assert.ok(docs.paths['/edition-generations/{generationId}'].get)
 assert.ok(docs.paths['/edition-concepts/{conceptId}/unlock'].post)
+assert.ok(docs.paths['/edition-concepts/{conceptId}/certificate'].get)
+assert.ok(docs.paths['/edition-concepts/{conceptId}/certificate'].post)
 
 // 콘셉트 화면은 회차 이력을, 완료 화면은 에디션명 선택을 쓴다
 assert.ok(docs.paths['/memories/{memoryId}/edition-generations'].get)
 assert.ok(docs.paths['/edition-generations/{generationId}/edition-name'].patch)
+
+// 보증서 조회와 최종 확정은 본문 없이 conceptId 경로 변수만 보내고 같은 응답을 받는다
+const certificatePath = docs.paths['/edition-concepts/{conceptId}/certificate']
+const certificateResponseRef =
+    '#/components/schemas/ApiResponseCertificateResponseDto'
+
+assert.equal(certificatePath.get.requestBody, undefined)
+assert.equal(certificatePath.post.requestBody, undefined)
+assert.equal(
+    certificatePath.get.responses['200'].content['*/*'].schema.$ref,
+    certificateResponseRef,
+)
+assert.equal(
+    certificatePath.post.responses['200'].content['*/*'].schema.$ref,
+    certificateResponseRef,
+)
+assert.ok(docs.components.schemas.CertificateResponseDto.properties.conceptId)
+assert.ok(docs.components.schemas.CertificateResponseDto.properties.certificate)
 
 // 이력 응답은 페이지라 content 로 감싸여 있다
 assert.ok(
