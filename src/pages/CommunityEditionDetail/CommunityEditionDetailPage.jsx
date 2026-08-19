@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 import Header from '../../components/Header'
 import Button from '../../components/Button'
@@ -7,6 +7,7 @@ import EditionViewer from '../../components/EditionViewer'
 
 import {
     getCommunityEdition,
+    getPublicCollections,
     getLikeStatus,
     likeEdition,
     unlikeEdition,
@@ -29,6 +30,7 @@ const formatDate = (value) => {
 }
 
 export default function CommunityEditionDetailPage() {
+    const navigate = useNavigate()
     const { conceptId } = useParams()
 
     const numericConceptId = Number(conceptId)
@@ -43,6 +45,7 @@ export default function CommunityEditionDetailPage() {
     const [liked, setLiked] = useState(false)
     const [likeLoading, setLikeLoading] = useState(true)
     const [likePending, setLikePending] = useState(false)
+    const [collectionPending, setCollectionPending] = useState(false)
 
     // =========================
     // 공개 에디션 상세 조회
@@ -231,6 +234,32 @@ export default function CommunityEditionDetailPage() {
         }
     }
 
+    const handleViewCollection = async () => {
+        if (collectionPending) return
+
+        setCollectionPending(true)
+
+        try {
+            const data = await getPublicCollections({
+                nickname: edition.ownerNickname,
+                size: 100,
+            })
+            const owner = data?.content?.find(
+                ({ userId }) => Number(userId) === Number(edition.ownerId),
+            )
+
+            if (!owner?.shareToken) {
+                throw new Error('공개된 컬렉션을 찾을 수 없습니다.')
+            }
+
+            navigate(`/community/collection/${owner.shareToken}`)
+        } catch (caught) {
+            alert(caught.message ?? '컬렉션을 불러오지 못했습니다.')
+        } finally {
+            setCollectionPending(false)
+        }
+    }
+
     // =========================
     // 로딩
     // =========================
@@ -359,11 +388,12 @@ export default function CommunityEditionDetailPage() {
                                         type="button"
                                         variant="secondary"
                                         className="h-[28px] shrink-0 px-[9px] text-[8px]"
-                                        onClick={() => {
-                                            // TODO: 다른 사용자 컬렉션 페이지 연결
-                                        }}
+                                        disabled={collectionPending}
+                                        onClick={handleViewCollection}
                                     >
-                                        컬렉션 보러가기
+                                        {collectionPending
+                                            ? '불러오는 중...'
+                                            : '컬렉션 보러가기'}
                                     </Button>
                                 </div>
                             </div>
