@@ -1,5 +1,12 @@
-import { useNavigate, useParams } from 'react-router'
-import { useEffect, useState } from 'react'
+import {
+    useEffect,
+    useState,
+} from 'react'
+
+import {
+    useNavigate,
+    useParams,
+} from 'react-router'
 
 import Header from '../../components/Header'
 import Button from '../../components/Button'
@@ -10,16 +17,38 @@ import BagSection from './components/BagSection'
 import ClothingSection from './components/ClothingSection'
 
 import { editions } from '../../data/editions'
+
 import {
     colorOf,
-    loadTheme,
     DEFAULT_THEME,
 } from '../../data/collectionTheme'
 
-import { getSharedView } from '../../api/community'
-import { getMyCollection } from '../../api/collection'
+import {
+    getSharedView,
+} from '../../api/community'
 
-import { DEMO_PERSON } from '../../data/demoCommunity'
+import {
+    getMyCollection,
+} from '../../api/collection'
+
+import {
+    getMe,
+    useMe,
+} from '../../api/user'
+
+import {
+    DEMO_PERSON,
+} from '../../data/demoCommunity'
+
+// 백엔드 테마 enum → 프론트 컬러 value
+const API_THEME_VALUES = {
+    WHITE: 'white',
+    IVORY: 'ivory',
+    BUTTER: 'butter',
+    OLIVE_CREAM: 'olive',
+    DUSTY_ROSE: 'rose',
+    LIGHT_MOCHA: 'mocha',
+}
 
 const bucketOf = (category = '') => {
     if (category.includes('가방')) {
@@ -38,20 +67,59 @@ const bucketOf = (category = '') => {
 
 export default function CollectionPage() {
     const navigate = useNavigate()
-    const { shareToken, userId } = useParams()
 
-    const isMine = !shareToken && !userId
+    const {
+        shareToken,
+        userId,
+    } = useParams()
+
+    const me = useMe()
+
+    const isMine =
+        !shareToken && !userId
 
     const isMock =
-        shareToken === DEMO_PERSON.shareToken ||
+        shareToken ===
+        DEMO_PERSON.shareToken ||
         !!userId
+
+    // =========================
+    // 내 정보
+    // =========================
+
+    useEffect(() => {
+        if (!isMine) return
+
+        let cancelled = false
+
+        const fetchMe = async () => {
+            try {
+                await getMe()
+            } catch (error) {
+                if (cancelled) return
+
+                console.error(
+                    '내 정보 조회 실패:',
+                    error,
+                )
+            }
+        }
+
+        fetchMe()
+
+        return () => {
+            cancelled = true
+        }
+    }, [isMine])
 
     // =========================
     // 내 컬렉션
     // =========================
 
-    const [myEditions, setMyEditions] =
-        useState([])
+    const [
+        myEditions,
+        setMyEditions,
+    ] = useState([])
 
     const [
         collectionLoading,
@@ -63,93 +131,129 @@ export default function CollectionPage() {
         setCollectionError,
     ] = useState('')
 
-    const [unauthorized, setUnauthorized] =
-        useState(false)
+    const [
+        unauthorized,
+        setUnauthorized,
+    ] = useState(false)
 
     useEffect(() => {
         if (!isMine) return
 
         let cancelled = false
 
-        const fetchMyCollection = async () => {
-            try {
-                setCollectionLoading(true)
-                setCollectionError('')
-                setUnauthorized(false)
+        const fetchMyCollection =
+            async () => {
+                try {
+                    setCollectionLoading(
+                        true,
+                    )
 
-                const data =
-                    await getMyCollection({
-                        page: 0,
-                        size: 100,
-                    })
-
-                if (cancelled) return
-
-                const mapped = (
-                    data?.content ?? []
-                ).map((card) => ({
-                    id: card.conceptId,
-
-                    number:
-                        card.certificate
-                            ?.editionNumber ?? '',
-
-                    name:
-                        card.certificate
-                            ?.editionName ?? '',
-
-                    issuedAt:
-                        card.certificate
-                            ?.issuedAt ?? null,
-
-                    createdAt:
-                        card.certificate?.issuedAt
-                            ?.slice(0, 10)
-                            .replaceAll(
-                                '-',
-                                '.',
-                            ) ?? '',
-
-                    images: {
-                        transparent:
-                            card.gridImageUrl,
-                    },
-
-                    mainCategory:
-                        bucketOf(
-                            card.certificate
-                                ?.category,
-                        ),
-
-                    href: `/edition/${card.conceptId}`,
-                }))
-
-                setMyEditions(mapped)
-            } catch (error) {
-                if (cancelled) return
-
-                console.error(
-                    '컬렉션 조회 실패:',
-                    error,
-                )
-
-                if (error.status === 401) {
-                    setUnauthorized(true)
-                    setMyEditions([])
                     setCollectionError('')
-                    return
-                }
+                    setUnauthorized(false)
 
-                setCollectionError(
-                    error.message ??
-                    '컬렉션을 불러오지 못했습니다.',
-                )
-            } finally {
-                if (!cancelled) {
-                    setCollectionLoading(false)
+                    const data =
+                        await getMyCollection({
+                            page: 0,
+                            size: 100,
+                        })
+
+                    if (cancelled) return
+
+                    const mapped = (
+                        data?.content ?? []
+                    ).map((card) => ({
+                        id:
+                            card.conceptId,
+
+                        number:
+                            card
+                                .certificate
+                                ?.editionNumber ??
+                            '',
+
+                        name:
+                            card
+                                .certificate
+                                ?.editionName ??
+                            '',
+
+                        issuedAt:
+                            card
+                                .certificate
+                                ?.issuedAt ??
+                            null,
+
+                        createdAt:
+                            card.certificate
+                                ?.issuedAt
+                                ?.slice(
+                                    0,
+                                    10,
+                                )
+                                .replaceAll(
+                                    '-',
+                                    '.',
+                                ) ??
+                            '',
+
+                        images: {
+                            transparent:
+                                card.gridImageUrl,
+                        },
+
+                        mainCategory:
+                            bucketOf(
+                                card
+                                    .certificate
+                                    ?.category,
+                            ),
+
+                        href: `/edition/${card.conceptId}`,
+                    }))
+
+                    setMyEditions(
+                        mapped,
+                    )
+                } catch (error) {
+                    if (cancelled)
+                        return
+
+                    console.error(
+                        '컬렉션 조회 실패:',
+                        error,
+                    )
+
+                    if (
+                        error.status ===
+                        401
+                    ) {
+                        setUnauthorized(
+                            true,
+                        )
+
+                        setMyEditions(
+                            [],
+                        )
+
+                        setCollectionError(
+                            '',
+                        )
+
+                        return
+                    }
+
+                    setCollectionError(
+                        error.message ??
+                        '컬렉션을 불러오지 못했습니다.',
+                    )
+                } finally {
+                    if (!cancelled) {
+                        setCollectionLoading(
+                            false,
+                        )
+                    }
                 }
             }
-        }
 
         fetchMyCollection()
 
@@ -162,26 +266,38 @@ export default function CollectionPage() {
     // 다른 사람 공유 컬렉션
     // =========================
 
-    const [shared, setShared] =
-        useState(null)
+    const [
+        shared,
+        setShared,
+    ] = useState(null)
 
     const [
         sharedLoading,
         setSharedLoading,
     ] = useState(false)
 
-    const [sharedError, setSharedError] =
-        useState('')
+    const [
+        sharedError,
+        setSharedError,
+    ] = useState('')
 
     useEffect(() => {
-        if (!shareToken || isMock) return
+        if (
+            !shareToken ||
+            isMock
+        ) {
+            return
+        }
 
         let cancelled = false
 
         const fetchSharedCollection =
             async () => {
                 try {
-                    setSharedLoading(true)
+                    setSharedLoading(
+                        true,
+                    )
+
                     setSharedError('')
 
                     const data =
@@ -197,7 +313,8 @@ export default function CollectionPage() {
 
                     setShared(data)
                 } catch (error) {
-                    if (cancelled) return
+                    if (cancelled)
+                        return
 
                     console.error(
                         '공유 컬렉션 조회 실패:',
@@ -210,7 +327,9 @@ export default function CollectionPage() {
                     )
                 } finally {
                     if (!cancelled) {
-                        setSharedLoading(false)
+                        setSharedLoading(
+                            false,
+                        )
                     }
                 }
             }
@@ -220,26 +339,40 @@ export default function CollectionPage() {
         return () => {
             cancelled = true
         }
-    }, [shareToken, isMock])
+    }, [
+        shareToken,
+        isMock,
+    ])
 
     // =========================
     // 공유 기능
     // =========================
 
-    const [shareOpen, setShareOpen] =
-        useState(false)
+    const [
+        shareOpen,
+        setShareOpen,
+    ] = useState(false)
 
     // =========================
-    // 테마
+    // 컬렉션 이름 + 테마
     // =========================
 
     const theme = isMine
-        ? loadTheme()
+        ? {
+            title:
+                me?.collectionName ||
+                DEFAULT_THEME.title,
+
+            color:
+                API_THEME_VALUES[
+                me?.collectionTheme
+                ] ||
+                DEFAULT_THEME.color,
+        }
         : DEFAULT_THEME
 
-    const collectionColor = colorOf(
-        theme.color,
-    )
+    const collectionColor =
+        colorOf(theme.color)
 
     // =========================
     // 공유 컬렉션 사용자
@@ -263,19 +396,25 @@ export default function CollectionPage() {
         id: card.conceptId,
 
         number:
-            card.certificate?.editionNumber ??
-            '',
+            card.certificate
+                ?.editionNumber ?? '',
 
         name:
-            card.certificate?.editionName ?? '',
+            card.certificate
+                ?.editionName ?? '',
 
         issuedAt:
-            card.certificate?.issuedAt ?? null,
+            card.certificate
+                ?.issuedAt ?? null,
 
         createdAt:
-            card.certificate?.issuedAt
+            card.certificate
+                ?.issuedAt
                 ?.slice(0, 10)
-                .replaceAll('-', '.') ?? '',
+                .replaceAll(
+                    '-',
+                    '.',
+                ) ?? '',
 
         images: {
             transparent:
@@ -296,31 +435,42 @@ export default function CollectionPage() {
             ? editions
             : sharedEditions
 
-    const accessoryEditions = items.filter(
-        (edition) =>
-            edition.mainCategory ===
-            'accessory',
-    )
+    const accessoryEditions =
+        items.filter(
+            (edition) =>
+                edition.mainCategory ===
+                'accessory',
+        )
 
-    const bagEditions = items.filter(
-        (edition) =>
-            edition.mainCategory === 'bag',
-    )
+    const bagEditions =
+        items.filter(
+            (edition) =>
+                edition.mainCategory ===
+                'bag',
+        )
 
-    const clothingEditions = items.filter(
-        (edition) =>
-            edition.mainCategory ===
-            'clothing',
-    )
+    const clothingEditions =
+        items.filter(
+            (edition) =>
+                edition.mainCategory ===
+                'clothing',
+        )
 
-    const latestEdition = [...items].sort(
+    const latestEdition = [
+        ...items,
+    ].sort(
         (a, b) =>
-            new Date(b.issuedAt ?? 0) -
-            new Date(a.issuedAt ?? 0),
+            new Date(
+                b.issuedAt ?? 0,
+            ) -
+            new Date(
+                a.issuedAt ?? 0,
+            ),
     )[0]
 
     const loading =
-        (isMine && collectionLoading) ||
+        (isMine &&
+            collectionLoading) ||
         (!isMine &&
             !isMock &&
             sharedLoading)
@@ -334,7 +484,8 @@ export default function CollectionPage() {
 
                     {loading && (
                         <p className="m-0 py-[56px] text-center text-[12px] text-muted">
-                            컬렉션을 불러오는
+                            컬렉션을
+                            불러오는
                             중입니다.
                         </p>
                     )}
@@ -346,12 +497,16 @@ export default function CollectionPage() {
                             <>
                                 <div className="mb-[24px]">
                                     <h1 className="m-0 text-[30px] leading-[1.2] font-semibold tracking-[-.04em] break-keep">
-                                        {theme.title}
+                                        {
+                                            theme.title
+                                        }
                                     </h1>
 
                                     <p className="mt-[12px] mb-0 text-[13px] leading-[1.7] text-ink/60">
-                                        추억을 담은
-                                        에디션을 나만의
+                                        추억을
+                                        담은
+                                        에디션을
+                                        나만의
                                         컬렉션에서
                                         확인하세요.
                                     </p>
@@ -387,15 +542,17 @@ export default function CollectionPage() {
                                         className="mt-[18px] mb-0 text-[18px] font-semibold"
                                         id="login-required-heading"
                                     >
-                                        로그인이 필요한
+                                        로그인이
+                                        필요한
                                         페이지입니다.
                                     </h2>
 
                                     <p className="mt-[10px] mb-0 text-[12.5px] leading-[20px] break-keep text-ink/55">
-                                        로그인하거나 회원가입
-                                        후
+                                        로그인하거나
+                                        회원가입 후
                                         <br />
-                                        컬렉션을 이용해보세요.
+                                        컬렉션을
+                                        이용해보세요.
                                     </p>
 
                                     <div className="mt-[24px]">
@@ -406,7 +563,9 @@ export default function CollectionPage() {
                                                 )
                                             }
                                         >
-                                            로그인 / 회원가입
+                                            로그인
+                                            /
+                                            회원가입
                                             하러가기
                                         </Button>
                                     </div>
@@ -436,7 +595,8 @@ export default function CollectionPage() {
                                         window.location.reload()
                                     }
                                 >
-                                    다시 시도
+                                    다시
+                                    시도
                                 </button>
                             </div>
                         )}
@@ -451,7 +611,9 @@ export default function CollectionPage() {
                                 role="alert"
                             >
                                 <p className="m-0 text-[13px] text-cognac">
-                                    {sharedError}
+                                    {
+                                        sharedError
+                                    }
                                 </p>
 
                                 <button
@@ -461,7 +623,8 @@ export default function CollectionPage() {
                                         window.location.reload()
                                     }
                                 >
-                                    다시 시도
+                                    다시
+                                    시도
                                 </button>
                             </div>
                         )}
@@ -490,7 +653,9 @@ export default function CollectionPage() {
                                     {isMine && (
                                         <div className="flex gap-[10px] max-[540px]:flex-col">
                                             <Button href="/edition/create">
-                                                + 새 에디션
+                                                +
+                                                새
+                                                에디션
                                                 만들기
                                             </Button>
 
@@ -498,7 +663,8 @@ export default function CollectionPage() {
                                                 href="/collection/theme"
                                                 variant="secondary"
                                             >
-                                                테마 변경
+                                                테마
+                                                변경
                                             </Button>
                                         </div>
                                     )}
@@ -679,7 +845,8 @@ export default function CollectionPage() {
                                                         </div>
 
                                                         <p className="mt-[9px] mb-0 text-[8px] text-ink/35">
-                                                            아직 생성된
+                                                            아직
+                                                            생성된
                                                             에디션이
                                                             없습니다.
                                                         </p>
@@ -703,7 +870,8 @@ export default function CollectionPage() {
                                                         )
                                                     }
                                                 >
-                                                    SHARE YOUR
+                                                    SHARE
+                                                    YOUR
                                                     <br />
                                                     COLLECTION
                                                 </button>
@@ -720,7 +888,8 @@ export default function CollectionPage() {
                                     </span>
 
                                     <span>
-                                        MEMORY ATELIER
+                                        MEMORY
+                                        ATELIER
                                     </span>
                                 </div>
                             </>
