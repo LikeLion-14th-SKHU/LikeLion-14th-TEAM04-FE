@@ -15,6 +15,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import AccessorySection from './components/AccessorySection'
 import BagSection from './components/BagSection'
 import ClothingSection from './components/ClothingSection'
+import { bucketOf } from './categoryBucket'
 
 import { editions } from '../../data/editions'
 
@@ -48,21 +49,6 @@ const API_THEME_VALUES = {
     OLIVE_CREAM: 'olive',
     DUSTY_ROSE: 'rose',
     LIGHT_MOCHA: 'mocha',
-}
-
-const bucketOf = (category = '') => {
-    if (category.includes('가방')) {
-        return 'bag'
-    }
-
-    if (
-        category.includes('악세') ||
-        category.includes('액세')
-    ) {
-        return 'accessory'
-    }
-
-    return 'clothing'
 }
 
 export default function CollectionPage() {

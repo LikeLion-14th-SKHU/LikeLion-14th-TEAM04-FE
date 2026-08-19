@@ -3,6 +3,7 @@ import {
     arrangeConcepts,
     isSelectable,
 } from '../src/pages/EditionCreate/conceptOrder.js'
+import { bucketOf } from '../src/pages/Collection/categoryBucket.js'
 
 const baseUrl = process.env.API_BASE_URL ?? 'https://api.memory-atelier.store/api/v1'
 const docs = await fetch(`${baseUrl}/api-docs`).then((response) => response.json())
@@ -93,5 +94,18 @@ assert.equal(
     isSelectable({ status: 'PENDING', isUnlocked: true }),
     false,
 )
+
+// 보증서 category 는 대분류가 아니라 세부 카테고리로 내려올 수 있다
+for (const category of ['가방', '핸드백', '토트백', '백팩', '클러치', '트래블']) {
+    assert.equal(bucketOf(category), 'bag')
+}
+
+for (const category of ['악세사리', '액세서리', '벨트', '스카프', '지갑', '키링', '헤어밴드']) {
+    assert.equal(bucketOf(category), 'accessory')
+}
+
+for (const category of ['의류', '니트', '가디건', '셔츠', '자켓', '원피스', '후드티', '블라우스', '팬츠']) {
+    assert.equal(bucketOf(category), 'clothing')
+}
 
 console.log('Edition generation API contract check passed')
