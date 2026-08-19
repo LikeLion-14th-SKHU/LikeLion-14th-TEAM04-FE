@@ -15,8 +15,9 @@ import EditionCreatePage from './pages/EditionCreate/EditionCreatePage'
 import EditionGeneratingPage from './pages/EditionCreate/EditionGeneratingPage'
 import EditionConceptPage from './pages/EditionCreate/EditionConceptPage'
 import EditionCompletePage from './pages/EditionCreate/EditionCompletePage'
-import EditionDetailPage from './pages/EditionDetail/EditionDetailPage'
-import CertificatePage from './pages/EditionDetail/CertificatePage'
+import MyEditionDetailPage from './pages/MyEditionDetail/MyEditionDetailPage'
+import CertificatePage from './pages/MyEditionDetail/CertificatePage'
+import CommunityEditionDetailPage from './pages/CommunityEditionDetail/CommunityEditionDetailPage'
 
 // 경로가 9개로 늘고 주문 흐름이 여러 단계를 오가게 되면서 라우터를 쓴다 —
 // pathname 스위치는 이동할 때마다 전체 새로고침이라 화면이 매번 깜빡였다.
@@ -43,9 +44,10 @@ export default function App() {
       <Route path="/edition/create/concepts" element={<EditionConceptPage />} />
       <Route path="/edition/create/complete" element={<EditionCompletePage />} />
 
-      <Route path="/edition/:editionId" element={<EditionDetailPage />} />
-      <Route path="/users/:userId/edition/:editionId" element={<EditionDetailPage />} />
-      <Route path="/edition/:editionId/certificate" element={<CertificatePage />} />
+      <Route path="/edition/:conceptId" element={<MyEditionDetailPage />} />
+      <Route path="/edition/:conceptId/certificate" element={<CertificatePage />} />
+
+      <Route path="/users/:userId/edition/:editionId" element={<CommunityEditionDetailPage />} />
 
       <Route path="/community" element={<CommunityPage />} />
       <Route path="/community/edition/:conceptId" element={<CommunityEditionPage />} />
