@@ -122,6 +122,11 @@ export default function CollectionPage() {
     ] = useState([])
 
     const [
+        myEditionTotal,
+        setMyEditionTotal,
+    ] = useState(0)
+
+    const [
         collectionLoading,
         setCollectionLoading,
     ] = useState(false)
@@ -198,7 +203,8 @@ export default function CollectionPage() {
 
                         images: {
                             transparent:
-                                card.gridImageUrl,
+                                card.gridImageUrl ||
+                                card.imageUrl,
                         },
 
                         mainCategory:
@@ -213,6 +219,11 @@ export default function CollectionPage() {
 
                     setMyEditions(
                         mapped,
+                    )
+
+                    setMyEditionTotal(
+                        data?.totalElements ??
+                        mapped.length,
                     )
                 } catch (error) {
                     if (cancelled)
@@ -233,6 +244,10 @@ export default function CollectionPage() {
 
                         setMyEditions(
                             [],
+                        )
+
+                        setMyEditionTotal(
+                            0,
                         )
 
                         setCollectionError(
@@ -753,7 +768,7 @@ export default function CollectionPage() {
 
                                                 <p className="mt-[5px] mb-0 font-brand text-[25px]">
                                                     {isMine
-                                                        ? myEditions.length
+                                                        ? myEditionTotal
                                                         : shared
                                                             ?.cards
                                                             ?.totalElements ??

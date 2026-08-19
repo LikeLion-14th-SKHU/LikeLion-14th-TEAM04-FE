@@ -32,6 +32,16 @@ export const analyzeMemory = (memoryId) =>
         auth: true,
     })
 
+// 에디션 생성에 원문과 AI로 다듬은 사연 중 무엇을 쓸지 고른다
+export const selectStorySource = (memoryId, useRefinedStory) =>
+    api(`/memories/${memoryId}/story-source`, {
+        method: 'PATCH',
+        auth: true,
+        body: {
+            useRefinedStory,
+        },
+    })
+
 // 접수만 하고 즉시 응답한다 — 콘셉트 3장은 모두 PENDING 이고 imageUrl 은 null
 export const requestEditionGeneration = (memoryId, body) =>
     api(`/memories/${memoryId}/edition-generations`, {
