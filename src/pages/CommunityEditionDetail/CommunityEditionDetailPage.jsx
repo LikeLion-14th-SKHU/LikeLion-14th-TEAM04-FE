@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 
 import Header from '../../components/Header'
 import Button from '../../components/Button'
+import EditionViewer from '../../components/EditionViewer'
 
 import {
     getCommunityEdition,
@@ -306,29 +307,12 @@ export default function CommunityEditionDetailPage() {
                             ====================== */}
                             <div>
 
-                                {/* 에디션 이미지 */}
-                                <div className="bg-[#f6f0e6] p-[14px]">
-                                    <div className="relative aspect-square w-full overflow-hidden bg-[#ded0ba]">
-                                        {edition.imageUrl ? (
-                                            <img
-                                                src={
-                                                    edition.imageUrl
-                                                }
-                                                alt={
-                                                    certificate.editionName ||
-                                                    '에디션'
-                                                }
-                                                className="h-full w-full object-contain p-[18px]"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center">
-                                                <span className="text-[8px] tracking-[.12em] text-ink/35">
-                                                    EDITION IMAGE
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                {/* 에디션 3D / 2D 대체 */}
+                                <EditionViewer
+                                    modelUrl={edition.modelUrl}
+                                    imageUrl={edition.gridImageUrl || edition.imageUrl}
+                                    alt={certificate.editionName || '에디션'}
+                                />
 
                                 {/* 좋아요 수 */}
                                 <div className="mt-[12px] flex items-center gap-[6px] text-[10px] text-ink/55">

@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 
 import Header from '../../components/Header'
 import Button from '../../components/Button'
+import EditionViewer from '../../components/EditionViewer'
 import CurationCard from './components/CurationCard'
 
 import { getMyCollectionEdition } from '../../api/collection'
@@ -41,6 +42,7 @@ export default function MyEditionDetailPage() {
     const numericConceptId = Number(conceptId)
 
     const [edition, setEdition] = useState(null)
+    const modelPending = Boolean(edition?.conceptId && !edition.modelUrl)
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -144,6 +146,31 @@ export default function MyEditionDetailPage() {
             cancelled = true
         }
     }, [numericConceptId])
+
+    // 보증서 발급 직후에는 3D 변환이 아직 끝나지 않을 수 있다
+    useEffect(() => {
+        if (!modelPending) return
+
+        let cancelled = false
+
+        const interval = setInterval(async () => {
+            try {
+                const data = await getMyCollectionEdition(numericConceptId)
+
+                if (!cancelled) setEdition(data)
+            } catch {
+                // 2D 이미지는 이미 있으므로 변환 상태 재조회 실패는 화면을 막지 않는다
+            }
+        }, 5000)
+
+        const timeout = setTimeout(() => clearInterval(interval), 180000)
+
+        return () => {
+            cancelled = true
+            clearInterval(interval)
+            clearTimeout(timeout)
+        }
+    }, [numericConceptId, modelPending])
 
     // =========================
     // 공개 설정 조회
@@ -429,28 +456,15 @@ export default function MyEditionDetailPage() {
         edition.originalItem ?? {}
 
     // =========================
-    // 공통 에디션 이미지
+    // 공통 에디션 뷰어
     // 기본정보 / 큐레이션 동일한 1:1
-    // 추후 modelUrl GLB 뷰어로 교체 가능
     // =========================
     const renderEditionViewer = () => (
-        <div className="bg-[#f6f0e6] p-[14px]">
-            <div className="relative aspect-square w-full overflow-hidden bg-[#ded0ba]">
-                {edition.imageUrl ? (
-                    <img
-                        src={edition.imageUrl}
-                        alt={certificate.editionName}
-                        className="h-full w-full object-contain p-[18px]"
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <span className="text-[8px] tracking-[.12em] text-ink/35">
-                            EDITION IMAGE
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
+        <EditionViewer
+            modelUrl={edition.modelUrl}
+            imageUrl={edition.gridImageUrl || edition.imageUrl}
+            alt={certificate.editionName || '에디션'}
+        />
     )
 
     // =========================
