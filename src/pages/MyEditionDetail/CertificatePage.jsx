@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
-import { toPng } from 'html-to-image'
+import { domToBlob } from 'modern-screenshot'
 
 import Header from '../../components/Header'
 import Button from '../../components/Button'
@@ -73,16 +73,16 @@ export default function CertificatePage() {
                 setEditionImage(
                     editionData?.imageUrl ?? '',
                 )
-            } catch (error) {
+            } catch (loadError) {
                 if (cancelled) return
 
                 console.error(
                     '보증서 조회 실패:',
-                    error,
+                    loadError,
                 )
 
                 setError(
-                    error.message ??
+                    loadError.message ??
                     '보증서를 불러오지 못했습니다.',
                 )
             } finally {
@@ -133,49 +133,57 @@ export default function CertificatePage() {
                 return null
             }
 
-            await waitForImages(
-                certificateRef.current,
-            )
+            const node = certificateRef.current
 
-            return toPng(
-                certificateRef.current,
-                {
-                    pixelRatio: 2,
-                    cacheBust: false,
-                    backgroundColor:
-                        '#f6f0e6',
-                },
-            )
+            await document.fonts?.ready
+            await waitForImages(node)
+
+            return domToBlob(node, {
+                scale: 2,
+                backgroundColor: '#f6f0e6',
+            })
         }
+
+    const certificateFileName = `memory-atelier-${certificate?.editionNumber || conceptId || 'certificate'}.png`
 
     // =========================
     // 저장
     // =========================
     const handleSave = async () => {
         try {
-            const dataUrl =
+            const blob =
                 await createCertificateImage()
 
-            if (!dataUrl) return
+            if (!blob) return
+
+            const url =
+                URL.createObjectURL(blob)
 
             const link =
                 document.createElement('a')
 
-            link.download = `${certificate.certificateText ||
-                certificate.editionNumber ||
-                'certificate'
-                }.png`
+            link.download =
+                certificateFileName
 
-            link.href = dataUrl
+            link.href = url
 
             document.body.appendChild(link)
 
             link.click()
             link.remove()
-        } catch (error) {
+
+            setTimeout(
+                () => URL.revokeObjectURL(url),
+                1000,
+            )
+        } catch (saveError) {
             console.error(
                 '보증서 이미지 저장 실패:',
-                error,
+                saveError,
+            )
+
+            alert(
+                '보증서 이미지를 저장하지 못했습니다.',
             )
         }
     }
@@ -185,23 +193,14 @@ export default function CertificatePage() {
     // =========================
     const handleShare = async () => {
         try {
-            const dataUrl =
+            const blob =
                 await createCertificateImage()
 
-            if (!dataUrl) return
-
-            const response =
-                await fetch(dataUrl)
-
-            const blob =
-                await response.blob()
+            if (!blob) return
 
             const file = new File(
                 [blob],
-                `${certificate.certificateText ||
-                certificate.editionNumber ||
-                'certificate'
-                }.png`,
+                certificateFileName,
                 {
                     type: 'image/png',
                 },
@@ -216,7 +215,6 @@ export default function CertificatePage() {
                 await navigator.share({
                     title:
                         'Memory Atelier Digital Certificate',
-                    text: `${certificate.editionName} 디지털 보증서`,
                     files: [file],
                 })
 
@@ -241,10 +239,21 @@ export default function CertificatePage() {
             alert(
                 '보증서 링크가 복사되었습니다.',
             )
-        } catch (error) {
+        } catch (shareError) {
+            if (
+                shareError.name ===
+                'AbortError'
+            ) {
+                return
+            }
+
             console.error(
                 '보증서 공유 실패:',
-                error,
+                shareError,
+            )
+
+            alert(
+                '보증서를 공유하지 못했습니다.',
             )
         }
     }

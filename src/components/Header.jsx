@@ -34,8 +34,8 @@ export default function Header() {
           className="h-[32px] w-auto -translate-y-[3px] max-[430px]:h-[24px] max-[430px]:-translate-y-[2px]"
           src="/assets/logo.png"
           alt=""
-          width="116"
-          height="120"
+          width="1536"
+          height="1024"
         />
         {/* 서비스명만 Cormorant Garamond. 그 외 텍스트는 body 기본(Roboto Mono) */}
         <span className="font-brand text-[24px] tracking-[.22em] uppercase max-[430px]:text-[13px] max-[430px]:tracking-[.08em]">
