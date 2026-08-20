@@ -62,6 +62,21 @@ export const getEditionGenerations = (memoryId, { page = 0, size = 50 } = {}) =>
         },
     )
 
+// 관리자 전용 — 잠긴 콘셉트도 이미지와 설명을 마스킹 없이 내려준다
+export const getAdminEditionGenerations = (
+    memoryId,
+    { page = 0, size = 50 } = {},
+) =>
+    api(
+        `/admin/memories/${memoryId}/edition-generations?${new URLSearchParams({
+            page,
+            size,
+        })}`,
+        {
+            auth: true,
+        },
+    )
+
 // AI 후보 중 하나를 고르거나 직접 지은 이름으로 바꾼다 (50자 이내)
 export const selectEditionName = (generationId, editionName) =>
     api(`/edition-generations/${generationId}/edition-name`, {

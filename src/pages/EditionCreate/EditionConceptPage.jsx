@@ -3,8 +3,16 @@ import { useNavigate } from 'react-router'
 import Header from '../../components/Header'
 import Button from '../../components/Button'
 import ConceptCard from './components/ConceptCard'
-import { arrangeConcepts, isSelectable } from './conceptOrder'
-import { getEditionGenerations, unlockConcept } from '../../api/edition'
+import {
+    arrangeConcepts,
+    isConceptLocked,
+    isSelectable,
+} from './conceptOrder'
+import {
+    getAdminEditionGenerations,
+    getEditionGenerations,
+    unlockConcept,
+} from '../../api/edition'
 import { getMe, useMe } from '../../api/user'
 
 // 회차는 돌린 순서대로, 회차 안에서는 노출 순서대로 이어 붙인다.
@@ -23,6 +31,7 @@ const flattenConcepts = (generations) =>
 export default function EditionConceptPage() {
     const navigate = useNavigate()
     const me = useMe()
+    const isAdmin = me?.role === 'ADMIN'
 
     // null 은 아직 불러오는 중이라는 뜻
     const [concepts, setConcepts] = useState(null)
@@ -38,8 +47,10 @@ export default function EditionConceptPage() {
     // 재조회를 다시 걸기 위한 신호
     const [tick, setTick] = useState(0)
 
-    const load = useCallback(async () => {
-        const page = await getEditionGenerations(memoryId)
+    const load = useCallback(async (revealAll) => {
+        const page = await (revealAll
+            ? getAdminEditionGenerations(memoryId)
+            : getEditionGenerations(memoryId))
         const loaded = flattenConcepts(page.content)
 
         // 추억은 만들었는데 아직 회차를 안 돌린 상태다 — 생성부터 하고 와야 한다
@@ -60,17 +71,17 @@ export default function EditionConceptPage() {
             return
         }
 
-        load().catch((caught) => {
-            // 없는 추억을 들고 있으면 이 화면으로 계속 되돌아온다 — 놓아줘야 처음부터 다시 할 수 있다
-            if (caught.status === 404) {
-                sessionStorage.removeItem('edition-memory-id')
-            }
+        // 권한을 먼저 알아야 관리자에게 잠긴 응답을 잘못 보여주지 않는다.
+        getMe()
+            .then((user) => load(user.role === 'ADMIN'))
+            .catch((caught) => {
+                // 없는 추억을 들고 있으면 이 화면으로 계속 되돌아온다 — 놓아줘야 처음부터 다시 할 수 있다
+                if (caught.status === 404) {
+                    sessionStorage.removeItem('edition-memory-id')
+                }
 
-            setError(caught.message)
-        })
-
-        // 열람에 크레딧을 쓰므로 잔액은 화면에 들어올 때 새로 받는다
-        getMe().catch(() => { })
+                setError(caught.message)
+            })
     }, [memoryId, navigate, load])
 
     // 생성 중에 뒤로 갔다 들어오면 아직 PENDING 인 회차를 보게 된다 —
@@ -80,18 +91,19 @@ export default function EditionConceptPage() {
 
         const timer = setTimeout(() => {
             // 실패해도 다음 타이머를 건다 — 순단 한 번에 영영 멈추면 화면이 '만드는 중'으로 굳는다
-            load()
+            load(isAdmin)
                 .catch(() => { })
                 .finally(() => setTick((prev) => prev + 1))
         }, 2000)
 
         return () => clearTimeout(timer)
-    }, [concepts, load, tick])
+    }, [concepts, isAdmin, load, tick])
 
     // 이미지가 준비된 잠긴 콘셉트만 열 수 있다
     const lockedConcepts = (concepts ?? []).filter(
         (concept) =>
-            !concept.isUnlocked && concept.status === 'IMAGE_READY',
+            isConceptLocked(concept, isAdmin) &&
+            concept.status === 'IMAGE_READY',
     )
 
     const handleUnlockBlurred = async () => {
@@ -129,14 +141,41 @@ export default function EditionConceptPage() {
         navigate('/edition/create/generating')
     }
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        const selected = concepts.find(
+            (concept) => concept.conceptId === selectedId,
+        )
+
+        if (!selected) return
+
+        let concept = selected
+
+        if (isAdmin && !selected.isUnlocked) {
+            setUnlocking(true)
+            setError('')
+
+            try {
+                const opened = await unlockConcept(selectedId)
+
+                concept = {
+                    ...selected,
+                    ...opened,
+                    generationId: selected.generationId,
+                }
+
+                await getMe().catch(() => { })
+            } catch (caught) {
+                setError(caught.message)
+                setUnlocking(false)
+                return
+            }
+
+            setUnlocking(false)
+        }
+
         sessionStorage.setItem(
             'edition-concept',
-            JSON.stringify(
-                concepts.find(
-                    (concept) => concept.conceptId === selectedId,
-                ),
-            ),
+            JSON.stringify(concept),
         )
 
         navigate('/edition/create/complete')
@@ -192,7 +231,10 @@ export default function EditionConceptPage() {
                                     <ConceptCard
                                         key={concept.conceptId}
                                         concept={concept}
-                                        locked={!concept.isUnlocked}
+                                        locked={isConceptLocked(
+                                            concept,
+                                            isAdmin,
+                                        )}
                                         selected={
                                             selectedId === concept.conceptId
                                         }
@@ -262,10 +304,10 @@ export default function EditionConceptPage() {
                                 </p>
 
                                 <Button
-                                    disabled={!selectedId}
+                                    disabled={!selectedId || unlocking}
                                     onClick={handleNext}
                                 >
-                                    다음
+                                    {unlocking ? '처리 중...' : '다음'}
                                 </Button>
                             </div>
                         </>
