@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {
     arrangeConcepts,
+    isConceptLocked,
     isSelectable,
 } from '../src/pages/EditionCreate/conceptOrder.js'
 import { bucketOf } from '../src/pages/Collection/categoryBucket.js'
@@ -21,6 +22,7 @@ assert.ok(docs.paths['/me/collection'].get)
 
 // 콘셉트 화면은 회차 이력을, 완료 화면은 에디션명 선택을 쓴다
 assert.ok(docs.paths['/memories/{memoryId}/edition-generations'].get)
+assert.ok(docs.paths['/admin/memories/{memoryId}/edition-generations'].get)
 assert.ok(docs.paths['/edition-generations/{generationId}/edition-name'].patch)
 
 // 보증서 조회와 최종 확정은 본문 없이 conceptId 경로 변수만 보내고 같은 응답을 받는다
@@ -94,6 +96,8 @@ assert.equal(
     isSelectable({ status: 'PENDING', isUnlocked: true }),
     false,
 )
+assert.equal(isConceptLocked({ isUnlocked: false }, false), true)
+assert.equal(isConceptLocked({ isUnlocked: false }, true), false)
 
 // 보증서 category 는 대분류가 아니라 세부 카테고리로 내려올 수 있다
 for (const category of ['가방', '핸드백', '토트백', '백팩', '클러치', '트래블']) {

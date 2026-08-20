@@ -1,6 +1,9 @@
 export const isSelectable = (concept) =>
     concept.isUnlocked && concept.status === 'IMAGE_READY'
 
+export const isConceptLocked = (concept, isAdmin) =>
+    !isAdmin && !concept.isUnlocked
+
 export const arrangeConcepts = (concepts) => {
     const ordered = [...concepts].sort(
         (a, b) => a.displayOrder - b.displayOrder,
