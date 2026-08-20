@@ -606,7 +606,7 @@ export default function MyEditionDetailPage() {
                     </div>
                     {/* 원본 의류 정보 */}
                     <div className="mt-[20px] bg-[#f6f0e6] px-[22px] py-[18px]">
-                        <div className="flex items-start justify-between gap-[24px] border-b border-line pb-[12px]">
+                        <div className="flex items-start justify-between gap-[24px]">
                             <span className="shrink-0 text-[10.5px] text-ink/50">
                                 원본 의류
                             </span>
@@ -619,16 +619,6 @@ export default function MyEditionDetailPage() {
                                 ]
                                     .filter(Boolean)
                                     .join(' · ') || '-'}
-                            </span>
-                        </div>
-
-                        <div className="flex items-start justify-between gap-[24px] pt-[12px]">
-                            <span className="shrink-0 text-[10.5px] text-ink/50">
-                                보증서 번호
-                            </span>
-
-                            <span className="text-right text-[10.5px]">
-                                {certificate.certificateText || '-'}
                             </span>
                         </div>
                     </div>

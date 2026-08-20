@@ -47,7 +47,7 @@ export default function AuthForm({ mode, onModeChange }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   // 로그인·회원가입이 전부 이 값 하나로 저장 위치를 정한다
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(true)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
