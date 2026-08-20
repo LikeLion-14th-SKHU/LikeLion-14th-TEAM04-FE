@@ -31,6 +31,10 @@ import {
 import {
     getMyCollection,
 } from '../../api/collection'
+import {
+    getMyPublicSettings,
+    updateCollectionVisibility,
+} from '../../api/publicSettings'
 
 import {
     getMe,
@@ -353,6 +357,93 @@ export default function CollectionPage() {
         shareOpen,
         setShareOpen,
     ] = useState(false)
+
+    const [
+        sharePending,
+        setSharePending,
+    ] = useState(false)
+
+    const [
+        shareError,
+        setShareError,
+    ] = useState('')
+
+    const [
+        collectionIsPublic,
+        setCollectionIsPublic,
+    ] = useState(null)
+
+    useEffect(() => {
+        if (!isMine) return
+
+        let cancelled = false
+
+        getMyPublicSettings()
+            .then((settings) => {
+                if (!cancelled) {
+                    setCollectionIsPublic(
+                        settings.collection
+                            ?.isPublic ?? false,
+                    )
+                }
+            })
+            .catch((error) => {
+                if (cancelled) return
+
+                console.error(
+                    '컬렉션 공개 설정 조회 실패:',
+                    error,
+                )
+
+                setShareError(
+                    error.message ??
+                    '컬렉션 공개 설정을 불러오지 못했습니다.',
+                )
+                setShareOpen(true)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [isMine])
+
+    const handleShareCollection = async () => {
+        if (
+            sharePending ||
+            collectionIsPublic === null
+        ) {
+            return
+        }
+
+        const nextIsPublic =
+            !collectionIsPublic
+
+        setSharePending(true)
+        setShareError('')
+
+        try {
+            await updateCollectionVisibility(
+                nextIsPublic,
+            )
+
+            setCollectionIsPublic(
+                nextIsPublic,
+            )
+        } catch (error) {
+            console.error(
+                '컬렉션 공개 설정 변경 실패:',
+                error,
+            )
+
+            setShareError(
+                error.message ??
+                '컬렉션 공개 설정을 변경하지 못했습니다.',
+            )
+        } finally {
+            setSharePending(false)
+            setShareOpen(true)
+        }
+    }
 
     // =========================
     // 컬렉션 이름 + 테마
@@ -865,16 +956,35 @@ export default function CollectionPage() {
                                                         borderColor:
                                                             collectionColor.border,
                                                     }}
-                                                    onClick={() =>
-                                                        setShareOpen(
-                                                            true,
-                                                        )
+                                                    disabled={
+                                                        sharePending ||
+                                                        collectionIsPublic ===
+                                                            null
+                                                    }
+                                                    onClick={
+                                                        handleShareCollection
                                                     }
                                                 >
-                                                    SHARE
-                                                    YOUR
-                                                    <br />
-                                                    COLLECTION
+                                                    {sharePending ? (
+                                                        'UPDATING...'
+                                                    ) : collectionIsPublic ===
+                                                      null ? (
+                                                        'LOADING...'
+                                                    ) : collectionIsPublic ? (
+                                                        <>
+                                                            MAKE
+                                                            COLLECTION
+                                                            <br />
+                                                            PRIVATE
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            SHARE
+                                                            YOUR
+                                                            <br />
+                                                            COLLECTION
+                                                        </>
+                                                    )}
                                                 </button>
                                             )}
                                         </aside>
@@ -900,8 +1010,19 @@ export default function CollectionPage() {
 
             <ConfirmModal
                 open={shareOpen}
-                title="컬렉션 공유"
-                description="컬렉션 링크 공유 기능은 추후 연동 예정입니다."
+                title={
+                    shareError
+                        ? '공개 설정 실패'
+                        : collectionIsPublic
+                            ? '컬렉션 공개 완료'
+                            : '컬렉션 비공개 완료'
+                }
+                description={
+                    shareError ||
+                    (collectionIsPublic
+                        ? '컬렉션이 공개 설정으로 변경되었습니다.'
+                        : '컬렉션이 비공개 설정으로 변경되었습니다.')
+                }
                 confirmText="확인"
                 cancelText={null}
                 onConfirm={() =>
